@@ -1,0 +1,99 @@
+\documentclass[11pt,a4paper]{scrartcl}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[swedish]{babel}
+\usepackage{amsmath, amssymb, graphicx, booktabs, hyperref, siunitx, xcolor, geometry, listings}
+\geometry{margin=2.5cm}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=blue}
+
+\title{Laborationsserie: Från första Python-rader till marknadsmodell med dagliga signaler}
+\author{%
+  \textbf{Kurslabb} \\[4pt]
+  \small Senaste uppdatering: \today
+}
+\date{}
+
+\lstset{
+  basicstyle=\ttfamily\small,
+  breaklines=true,
+  frame=single,
+  columns=fullflexible,
+  keepspaces=true
+}
+
+\begin{document}
+\maketitle
+
+\section*{Syfte}
+Målet är att stegvis bygga upp en enkel men komplett pipeline:
+(i) hämta S\&P~500-data från FRED, (ii) skapa enkla indikatorer (SMA, logavkastning),
+(iii) generera \emph{std-baserade} labels med 70 handelsdagars horisont,
+(iv) träna en modell som omtränas var 30:e handelsdag på ett rullande fönster om 3000 dagar,
+(v) ge en daglig ``köp/inte~köp''-signal, och (vi) utvärdera ett ettårs-backtest uppdelat i sex tvåmånadersfönster
+med TP/TN/FP/FN samt precision, recall och F1 för klass~1.
+De sista 70 dagarna saknar label (det finns ingen framtid att blicka 70 dagar in i).
+
+\section*{Data (FRED)}
+\begin{itemize}
+  \item Skapa en API-nyckel på \href{https://fred.stlouisfed.org/}{FRED} och sätt miljövariabeln \texttt{FRED\_API\_KEY}.
+  \item Serien vi använder är \texttt{SP500}.
+  \item Kör: \texttt{python -m src.main\_example} för ett end-to-end-exempel.
+\end{itemize}
+
+\section*{Övningar (enkla, korta TODOs)}
+\subsection*{A. Python-grunder (i notebook \texttt{notebooks/})}
+\begin{enumerate}
+  \item Skriv en funktion som summerar talen 1..n.
+  \item Skriv en loop som hittar största talet i en lista.
+\end{enumerate}
+
+\subsection*{B. Indikatorer (i \texttt{src/features.py})}
+\begin{enumerate}
+  \item \textbf{TODO1:} Implementera \texttt{add\_ema(df, span)} som beräknar EMA för \texttt{Close}.
+  \item \textbf{TODO2:} Lägg till \texttt{TEMA} eller en enkel momentum-indikator.
+\end{enumerate}
+
+\subsection*{C. Labels (i \texttt{src/labels.py})}
+\begin{enumerate}
+  \item \textbf{Förklaring:} Vi beräknar framtida avkastning över 70 handelsdagar. Om den överstiger en multipel av den historiska
+  volatiliteten (std) skalad med $\sqrt{70}$, sätter vi label $= 1$ annars $= 0$. De sista 70 dagarna får \texttt{NaN}.
+  \item \textbf{TODO3:} Exponera multipeln \texttt{STD\_UP\_MULT} i \texttt{src/config.py} och testa t.ex.\ 0.8, 1.0, 1.2.
+\end{enumerate}
+
+\subsection*{D. Modell (i \texttt{src/model.py})}
+\begin{enumerate}
+  \item \textbf{TODO4:} Ändra MLP-arkitekturen (t.ex.\ fler/djupare lager) och notera effekter på precision/recall.
+  \item \textbf{TODO5:} Jämför mot \texttt{DummyClassifier}.
+\end{enumerate}
+
+\subsection*{E. Återträning och drift (i \texttt{src/train\_predict.py})}
+\begin{enumerate}
+  \item \textbf{TODO6:} Ändra återträningssteg (ex.\ 20 eller 40 handelsdagar) och diskutera trade-off.
+\end{enumerate}
+
+\subsection*{F. Backtest och mått (i \texttt{src/backtest.py} och \texttt{src/evaluate.py})}
+\begin{enumerate}
+  \item \textbf{Konfusionsmatris-exempel:} Antag att i ett fönster har vi $TP=30$, $FP=10$, $FN=20$. Då
+  \begin{align*}
+    \mathrm{precision} &= \frac{TP}{TP+FP} = \frac{30}{30+10} = 0.75,\\
+    \mathrm{recall} &= \frac{TP}{TP+FN} = \frac{30}{30+20} = 0.60,\\
+    \mathrm{F1} &= \frac{2\cdot 0.75 \cdot 0.60}{0.75 + 0.60} \approx 0.666.
+  \end{align*}
+  \item \textbf{TODO7:} Kör \texttt{backtest\_six\_windows} och fyll i en tabell med TP/TN/FP/FN och precision/recall/F1 för klass 1.
+  \item \textbf{TODO8:} Rita equity-kurvan för DCA-regeln ”köp på nästa 1-dag” och skriv två observationer.
+\end{enumerate}
+
+\section*{Resultat och slutsats}
+Samla fönsterresultaten i en tydlig tabell. Kommentera:
+\begin{itemize}
+  \item I vilka fönster fungerar modellen bäst/sämst (med avseende på F1 för klass 1)?
+  \item Hur ser equity-kurvan ut jämfört med ren DCA (utan signalfilter)?
+\end{itemize}
+
+\section*{Tips för handledare}
+\begin{itemize}
+  \item Håll uppgifterna korta; varje TODO ska kunna lösas på några rader.
+  \item Om tiden är knapp: kör endast SMA(30) + logret(30) och MLP med standardinställningar.
+\end{itemize}
+
+\end{document}
