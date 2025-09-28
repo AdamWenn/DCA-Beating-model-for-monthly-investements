@@ -78,3 +78,7 @@ if __name__ == "__main__":
     plt.title("Equity and DCA Value Over Time with Stock Price")
     plt.tight_layout()
     plt.show()
+
+    # Write to new CSV
+    df_signals.to_csv("signals_with_equity.csv", index=False)
+    print("Wrote to signals_with_equity.csv")

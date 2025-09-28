@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useRef, useCallback } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { motion, useScroll, useTransform, useInView } from "framer-motion";
 import {
   LineChart,
@@ -11,8 +11,6 @@ import {
   ReferenceArea,
   Area,
   AreaChart,
-  ComposedChart,
-  Brush,
 } from "recharts";
 import * as Papa from "papaparse";
 
@@ -111,15 +109,13 @@ function useCountUp(value: number, duration = 900) {
 
 const MetricChip = ({ label, value }: { label: string; value: string }) => (
   <motion.div
-    initial={{ x: -12, opacity: 0 }}
-    whileInView={{ x: 0, opacity: 1 }}
+    initial={{ y: 8, opacity: 0 }}
+    whileInView={{ y: 0, opacity: 1 }}
     viewport={{ once: true }}
-    whileHover={{ scale: 1.02, x: 2 }}
-    transition={{ type: "spring", stiffness: 300, damping: 20 }}
-    className="backdrop-blur-md bg-black/20 ring-1 ring-white/10 text-white rounded-lg px-3 py-1.5 text-xs flex items-center gap-2 shadow-sm"
+    className="backdrop-blur-md bg-white/5 ring-1 ring-white/10 text-white rounded-full px-3 py-1 text-[11px] flex items-center gap-2"
   >
-    <span className="text-white/60 font-medium text-[10px] uppercase tracking-wider">{label}</span>
-    <span className="font-semibold tabular-nums text-white text-xs">{value}</span>
+    <span className="text-white/60">{label}</span>
+    <span className="font-semibold tabular-nums">{value}</span>
   </motion.div>
 );
 
@@ -178,9 +174,9 @@ interface Row {
 }
 interface Point {
   t: string;
-  strategyValue: number;
-  benchmarkValue: number;
-  closePrice: number;
+  strategy: number;
+  buyHold: number;
+  benchmark: number;
   signal?: 'BUY' | 'HOLD';
 }
 const byDateAsc = (a: Row, b: Row) => a.date.getTime() - b.date.getTime();
@@ -222,8 +218,8 @@ function parseCSV(text: string): Row[] {
     date: cols.findIndex((c) => ['date', 'timestamp'].includes(c)),
     close: cols.findIndex((c) => ['close', 'price', 'adjclose', 'adj_close', 'nav'].includes(c)),
     signal: cols.findIndex((c) => ['signal', 'recommendation', 'state'].includes(c)),
-    benchmark: cols.findIndex((c) => ['benchmark', 'qqq', 'nasdaq', 'ndx', 'dca value', 'dca_value'].includes(c)),
-    strategy: cols.findIndex((c) => ['strategy', 'wealth', 'portfolio', 'equity value', 'equity_value'].includes(c)),
+    benchmark: cols.findIndex((c) => ['benchmark', 'qqq', 'nasdaq', 'ndx'].includes(c)),
+    strategy: cols.findIndex((c) => ['strategy', 'wealth', 'portfolio'].includes(c)),
   };
   const toVal = (row: any, i: number) => (i >= 0 ? row[res.meta.fields![i]] : undefined);
   const rows: Row[] = [];
@@ -243,12 +239,26 @@ function parseCSV(text: string): Row[] {
 
 function buildSeries(rows: Row[]): Point[] {
   if (!rows.length) return [];
-  
-  return rows.map((r) => ({
+  const wealthS = [1],
+    wealthB = [1],
+    wealthBM = [1];
+  for (let i = 1; i < rows.length; i++) {
+    const prev = rows[i - 1],
+      curr = rows[i];
+    const assetRet = curr.close / prev.close - 1;
+    // Strategy: invested the *day AFTER* a BUY state
+    const dayRet = prev.signal === 'BUY' ? assetRet : 0;
+    wealthS.push((rows[i].strategy ?? wealthS[i - 1] * (1 + dayRet)) || wealthS[i - 1] * (1 + dayRet));
+    wealthB.push(wealthB[i - 1] * (1 + assetRet));
+    const prevBM = isFinite(prev.benchmark!) ? prev.benchmark! : prev.close;
+    const bmRet = isFinite(curr.benchmark!) ? curr.benchmark! / prevBM - 1 : assetRet;
+    wealthBM.push(wealthBM[i - 1] * (1 + bmRet));
+  }
+  return rows.map((r, i) => ({
     t: toISO(r.date),
-    strategyValue: r.strategy || 1000, // Raw Equity Value
-    benchmarkValue: r.benchmark || 1000, // Raw DCA Value
-    closePrice: r.close, // Raw close price for right Y-axis
+    strategy: wealthS[i] ?? wealthS[wealthS.length - 1],
+    buyHold: wealthB[i] ?? wealthB[wealthB.length - 1],
+    benchmark: wealthBM[i] ?? wealthBM[wealthBM.length - 1],
     signal: r.signal,
   }));
 }
@@ -265,326 +275,16 @@ function twoYearSlice(series: Point[]): Point[] {
 const Tip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null;
   const get = (k: string) => payload.find((p: any) => p.dataKey === k)?.value ?? 0;
-  const strategyValue = get('strategyValue');
-  const benchmarkValue = get('benchmarkValue');
-  const closePrice = get('closePrice');
   return (
-    <div className="rounded-xl backdrop-blur-md bg-white/10 ring-1 ring-white/15 p-3 text-xs text-white/90 space-y-2">
+    <div className="rounded-xl backdrop-blur-md bg-white/10 ring-1 ring-white/15 p-3 text-xs text-white/90 space-y-1">
       <div className="font-medium text-white">{label}</div>
       <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-        <span className="text-emerald-300">Strategy Value</span>
-        <span className="tabular-nums text-right">${strategyValue.toFixed(2)}</span>
-        <span className="text-amber-300">DCA Value</span>
-        <span className="tabular-nums text-right">${benchmarkValue.toFixed(2)}</span>
-      </div>
-      <div className="border-t border-white/10 pt-2">
-        <div className="grid grid-cols-2 gap-x-4">
-          <span className="text-zinc-300">NASDAQ Close</span>
-          <span className="tabular-nums text-right">${closePrice.toFixed(2)}</span>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// -------------------- Optimized Range Slider Component --------------------
-const CustomSlider = ({ data, onRangeChange }: { 
-  data: Point[], 
-  onRangeChange: (start: string | null, end: string | null) => void 
-}) => {
-  const [rangeStart, setRangeStart] = useState(0);
-  const [rangeEnd, setRangeEnd] = useState(Math.max(0, data.length - 1));
-  const [dragging, setDragging] = useState<'start' | 'end' | null>(null);
-  const [hovering, setHovering] = useState(false);
-  const sliderRef = useRef<HTMLDivElement>(null);
-
-  // Safety check for empty data
-  if (!data || data.length === 0) {
-    return <div className="text-white/50 text-sm">No data available for slider</div>;
-  }
-
-  // Initialize with full range only once
-  useEffect(() => {
-    if (data.length > 0) {
-      setRangeEnd(data.length - 1);
-      setRangeStart(0);
-    }
-  }, [data.length]);
-
-  // Convert position to data index - memoized for performance
-  const getIndexFromPosition = useCallback((clientX: number) => {
-    if (!sliderRef.current) return 0;
-    const rect = sliderRef.current.getBoundingClientRect();
-    const x = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
-    return Math.round(x * (data.length - 1));
-  }, [data.length]);
-
-  // Optimized update function with reduced state changes
-  const updateRangeThrottled = useCallback((start: number, end: number) => {
-    const newStart = Math.max(0, Math.min(start, data.length - 1));
-    const newEnd = Math.max(0, Math.min(end, data.length - 1));
-    const sortedStart = Math.min(newStart, newEnd);
-    const sortedEnd = Math.max(newStart, newEnd);
-    
-    // Ensure minimum range of 1
-    if (sortedEnd - sortedStart < 1) {
-      return;
-    }
-    
-    // Only update state if values actually changed
-    if (sortedStart !== rangeStart || sortedEnd !== rangeEnd) {
-      setRangeStart(sortedStart);
-      setRangeEnd(sortedEnd);
-      
-      // Immediate callback without requestAnimationFrame for better responsiveness
-      if (sortedStart === 0 && sortedEnd === data.length - 1) {
-        onRangeChange(null, null);
-      } else {
-        onRangeChange(data[sortedStart]?.t || null, data[sortedEnd]?.t || null);
-      }
-    }
-  }, [data, onRangeChange, rangeStart, rangeEnd]);
-
-  // Ultra-smooth drag handling with minimal throttling
-  useEffect(() => {
-    if (!dragging) return;
-
-    let lastUpdate = 0;
-    const throttleMs = 8; // ~120fps for ultra-smooth dragging
-    
-    const handleMouseMove = (e: MouseEvent) => {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      const now = performance.now();
-      if (now - lastUpdate < throttleMs) {
-        return;
-      }
-      lastUpdate = now;
-      
-      const index = getIndexFromPosition(e.clientX);
-      
-      if (dragging === 'start') {
-        const newStart = Math.max(0, Math.min(index, rangeEnd - 1));
-        if (newStart !== rangeStart) {
-          updateRangeThrottled(newStart, rangeEnd);
-        }
-      } else if (dragging === 'end') {
-        const newEnd = Math.min(data.length - 1, Math.max(index, rangeStart + 1));
-        if (newEnd !== rangeEnd) {
-          updateRangeThrottled(rangeStart, newEnd);
-        }
-      }
-    };
-
-    const handleMouseUp = () => {
-      setDragging(null);
-    };
-
-    document.addEventListener('mousemove', handleMouseMove, { passive: false });
-    document.addEventListener('mouseup', handleMouseUp, { passive: true });
-
-    return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseup', handleMouseUp);
-    };
-  }, [dragging, rangeStart, rangeEnd, getIndexFromPosition, updateRangeThrottled]);
-
-  const leftPercent = (rangeStart / Math.max(1, data.length - 1)) * 100;
-  const rightPercent = (rangeEnd / Math.max(1, data.length - 1)) * 100;
-  const widthPercent = rightPercent - leftPercent;
-
-  return (
-    <div className="space-y-2">
-      <div 
-        ref={sliderRef}
-        className="relative h-6 cursor-pointer select-none"
-      >
-        {/* Sleek Tapered Base Track */}
-        <div className="absolute inset-x-2 top-1/2 -translate-y-1/2 h-1 bg-black rounded-full border border-zinc-800 shadow-inner" />
-        
-        {/* Inactive Left Section - Tapered Black Hilt */}
-        {leftPercent > 0 && (
-          <div 
-            className="absolute top-1/2 rounded-l-full"
-            style={{
-              left: '8px',
-              width: `calc(${leftPercent}% - 8px)`,
-              height: '6px',
-              transform: 'translateY(-50%)',
-              background: 'linear-gradient(to right, #000000 0%, #27272a 50%, #3f3f46 100%)',
-              clipPath: 'polygon(0% 0%, 100% 25%, 100% 75%, 0% 100%)',
-              boxShadow: `
-                inset 0 2px 4px rgba(0,0,0,0.9),
-                0 0 ${Math.max(5, widthPercent/4)}px rgba(255,255,255,${Math.min(0.08, widthPercent/500)})
-              `
-            }}
-          />
-        )}
-        
-        {/* Inactive Right Section - Tapered Black Hilt */}
-        {rightPercent < 100 && (
-          <div 
-            className="absolute top-1/2 rounded-r-full"
-            style={{
-              right: '8px',
-              width: `calc(${100 - rightPercent}% - 8px)`,
-              height: '6px',
-              transform: 'translateY(-50%)',
-              background: 'linear-gradient(to left, #000000 0%, #27272a 50%, #3f3f46 100%)',
-              clipPath: 'polygon(0% 25%, 100% 0%, 100% 100%, 0% 75%)',
-              boxShadow: `
-                inset 0 2px 4px rgba(0,0,0,0.9),
-                0 0 ${Math.max(5, widthPercent/4)}px rgba(255,255,255,${Math.min(0.08, widthPercent/500)})
-              `
-            }}
-          />
-        )}
-        
-        {/* Optimized Light Beam */}
-        <div 
-          className="absolute top-1/2 -translate-y-1/2 z-5 group" 
-          style={{ left: `${leftPercent}%`, width: `${widthPercent}%` }}
-          onMouseEnter={() => setHovering(true)}
-          onMouseLeave={() => setHovering(false)}
-        >
-          {/* Soft Outer Glow */}
-          <div
-            className={`absolute top-1/2 -translate-y-1/2 transition-opacity duration-150 ${
-              dragging || hovering ? 'opacity-80' : 'opacity-40'
-            }`}
-            style={{
-              width: '100%',
-              height: '16px',
-              background: `radial-gradient(ellipse, rgba(255,255,255,${dragging || hovering ? '0.15' : '0.08'}) 0%, rgba(255,255,255,${dragging || hovering ? '0.08' : '0.04'}) 40%, rgba(255,255,255,0.01) 80%, transparent 100%)`,
-              borderRadius: '50%',
-              filter: 'blur(6px)'
-            }}
-          />
-          
-          {/* Main Light Body - Bright and Glowing */}
-          <div
-            className={`absolute top-1/2 -translate-y-1/2 transition-opacity duration-150 ${
-              dragging || hovering ? 'opacity-100' : 'opacity-70'
-            }`}
-            style={{
-              width: '100%',
-              height: '5px',
-              background: `linear-gradient(to right, rgba(255,255,255,${dragging || hovering ? '0.8' : '0.6'}) 0%, rgba(255,255,255,${dragging || hovering ? '1' : '0.8'}) 20%, rgba(255,255,255,${dragging || hovering ? '1' : '0.8'}) 80%, rgba(255,255,255,${dragging || hovering ? '0.8' : '0.6'}) 100%)`,
-              borderRadius: '2px',
-              filter: 'blur(1px)',
-              boxShadow: `
-                0 0 ${dragging || hovering ? '10px' : '6px'} rgba(255,255,255,${dragging || hovering ? '0.6' : '0.4'}),
-                0 0 ${dragging || hovering ? '20px' : '12px'} rgba(255,255,255,${dragging || hovering ? '0.3' : '0.2'})
-              `
-            }}
-          />
-          
-          {/* Bright Core Light */}
-          <div
-            className={`absolute top-1/2 -translate-y-1/2 transition-opacity duration-150 ${
-              dragging || hovering ? 'opacity-100' : 'opacity-80'
-            }`}
-            style={{
-              width: '100%',
-              height: '2px',
-              background: `linear-gradient(to right, rgba(255,255,255,${dragging || hovering ? '0.9' : '0.7'}) 0%, rgba(255,255,255,1) 30%, rgba(255,255,255,1) 70%, rgba(255,255,255,${dragging || hovering ? '0.9' : '0.7'}) 100%)`,
-              borderRadius: '1px',
-              boxShadow: `
-                0 0 ${dragging || hovering ? '6px' : '3px'} rgba(255,255,255,${dragging || hovering ? '0.8' : '0.6'}),
-                inset 0 0 1px rgba(255,255,255,0.9)
-              `
-            }}
-          />
-        </div>
-        
-        {/* Start Handle - Vibrant Round Emitter */}
-        <div
-          className="group absolute top-1/2 w-5 h-5 bg-gradient-to-br from-zinc-800 via-zinc-900 to-black rounded-full cursor-grab active:cursor-grabbing border border-zinc-600 z-20 transition-transform duration-150 hover:scale-110"
-          style={{
-            left: `${leftPercent}%`,
-            transform: `translate(-50%, -50%)`,
-            boxShadow: `
-              0 1px 3px rgba(0,0,0,0.5),
-              inset 0 1px 1px rgba(255,255,255,0.08)
-            `
-          }}
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setDragging('start');
-          }}
-        >
-          {/* Vibrant Glow Effect */}
-          <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <div 
-              className="absolute inset-0 rounded-full bg-white animate-pulse"
-              style={{
-                boxShadow: `
-                  0 0 12px rgba(255,255,255,0.8),
-                  0 0 24px rgba(255,255,255,0.4),
-                  0 0 36px rgba(255,255,255,0.2)
-                `
-              }}
-            />
-          </div>
-          {/* Dark Core */}
-          <div className="absolute inset-0.5 bg-gradient-to-br from-zinc-700 to-black rounded-full" />
-        </div>
-        
-        {/* End Handle - Vibrant Round Emitter */}
-        <div
-          className="group absolute top-1/2 w-5 h-5 bg-gradient-to-br from-zinc-800 via-zinc-900 to-black rounded-full cursor-grab active:cursor-grabbing border border-zinc-600 z-20 transition-transform duration-150 hover:scale-110"
-          style={{
-            left: `${rightPercent}%`,
-            transform: `translate(-50%, -50%)`,
-            boxShadow: `
-              0 1px 3px rgba(0,0,0,0.5),
-              inset 0 1px 1px rgba(255,255,255,0.08)
-            `
-          }}
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            setDragging('end');
-          }}
-        >
-          {/* Vibrant Glow Effect */}
-          <div className="absolute inset-0 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-            <div 
-              className="absolute inset-0 rounded-full bg-white animate-pulse"
-              style={{
-                boxShadow: `
-                  0 0 12px rgba(255,255,255,0.8),
-                  0 0 24px rgba(255,255,255,0.4),
-                  0 0 36px rgba(255,255,255,0.2)
-                `
-              }}
-            />
-          </div>
-          {/* Dark Core */}
-          <div className="absolute inset-0.5 bg-gradient-to-br from-zinc-700 to-black rounded-full" />
-        </div>
-      </div>
-      
-      {/* Inline range info */}
-      <div className="flex justify-between items-center">
-        <div className="font-mono text-[10px] text-white/80 bg-black/30 backdrop-blur-sm rounded px-2 py-0.5">
-          <span className="text-white/90">{data[rangeStart]?.t}</span>
-          <span className="mx-1 text-white/50">→</span>
-          <span className="text-white/90">{data[rangeEnd]?.t}</span>
-        </div>
-        
-        <button
-          onClick={() => {
-            setRangeStart(0);
-            setRangeEnd(data.length - 1);
-            onRangeChange(null, null);
-          }}
-          className="text-[10px] text-white/60 hover:text-white/90 transition-colors bg-black/30 backdrop-blur-sm rounded px-2 py-0.5"
-        >
-          Reset
-        </button>
+        <span>Strategy</span>
+        <span className="tabular-nums text-right">{get('strategy').toFixed(3)}</span>
+        <span>Benchmark</span>
+        <span className="tabular-nums text-right">{get('benchmark').toFixed(3)}</span>
+        <span>Buy & Hold</span>
+        <span className="tabular-nums text-right">{get('buyHold').toFixed(3)}</span>
       </div>
     </div>
   );
@@ -595,88 +295,48 @@ export default function BuyHoldImmersive() {
   const [csvText, setCsvText] = useState<string | null>(null);
   const [rows, setRows] = useState<Row[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
   const [mode, setMode] = useState<'story' | 'plan' | 'flow'>('story');
-  const [zoomDomain, setZoomDomain] = useState<[string, string] | null>(null);
-  const [hasInteracted, setHasInteracted] = useState(false);
 
-  // Load actual signals_with_equity.csv data with fallback
+  // Demo inline so it renders out of the box
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        console.log('Attempting to load signals_with_equity.csv...');
-        const response = await fetch('/signals_with_equity.csv');
-        if (response.ok) {
-          const csvText = await response.text();
-          console.log('CSV loaded successfully, length:', csvText.length);
-          if (csvText && csvText.length > 100) {
-            setCsvText(csvText);
-          } else {
-            throw new Error('CSV file is empty or too small');
-          }
-        } else {
-          throw new Error('Failed to fetch CSV file');
-        }
-      } catch (error) {
-        console.error('Error loading CSV:', error);
-        console.log('Using demo data with equity values...');
-        const demo = `Date,Close,Signal,TN_TP_FP_FN,Equity Value,DCA Value
-2023-09-25,4337.44,Hold,TN,1000.0,1000.0
-2023-10-25,4186.77,Buy,TP,1050.0,965.2
-2023-10-26,4137.23,Buy,TP,1088.5,953.8
-2023-10-27,4117.37,Buy,TP,1083.2,948.9
-2023-11-01,4237.86,Buy,TP,1150.0,976.8
-2024-04-22,5010.6,Buy,TP,1450.0,1155.2
-2024-04-23,5070.55,Buy,TP,1480.0,1170.5
-2025-04-04,5074.08,Buy,TP,1650.0,1170.0
-2025-06-16,6033.11,Buy,TP,1750.0,1390.5`;
-        setCsvText(demo);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    loadData();
+    const demo = `date,close,signal
+2023-01-03,260,HOLD
+2023-01-04,262,HOLD
+2023-01-05,255,BUY
+2023-01-06,261,BUY
+2023-01-09,265,BUY
+2023-03-01,295,BUY
+2023-06-01,350,BUY
+2023-09-01,370,HOLD
+2023-12-01,390,BUY
+2024-03-01,410,BUY
+2024-06-03,440,BUY
+2024-09-02,430,HOLD
+2024-12-02,455,BUY
+2025-03-03,468,BUY
+2025-06-02,480,BUY
+2025-09-01,490,BUY`;
+    setCsvText(demo);
   }, []);
 
   useEffect(() => {
     if (!csvText) return;
     try {
-      const parsedRows = parseCSV(csvText);
-      console.log('Parsed rows:', parsedRows.length);
-      if (parsedRows.length > 0) {
-        const first = parsedRows[0];
-        const last = parsedRows[parsedRows.length - 1];
-        console.log('First row:', { date: first.date, close: first.close, strategy: first.strategy, benchmark: first.benchmark });
-        console.log('Last row:', { date: last.date, close: last.close, strategy: last.strategy, benchmark: last.benchmark });
-      }
-      setRows(parsedRows);
+      setRows(parseCSV(csvText));
       setError(null);
     } catch (e: any) {
-      console.error('Parse error:', e);
       setError(e?.message || 'Parse error');
     }
   }, [csvText]);
 
-  const seriesAll = useMemo(() => {
-    const series = buildSeries(rows);
-    console.log('Series data:', series.length, 'points');
-    if (series.length > 0) {
-      console.log('First point:', series[0]);
-      console.log('Last point:', series[series.length - 1]);
-    }
-    return series;
-  }, [rows]);
+  const seriesAll = useMemo(() => buildSeries(rows), [rows]);
   const series2y = useMemo(() => twoYearSlice(seriesAll), [seriesAll]);
 
   // Stats
   const stats = useMemo(() => {
     if (series2y.length < 3) return null;
-    const baseStrategy = series2y[0].strategyValue;
-    const baseBenchmark = series2y[0].benchmarkValue;
-    
-    const wS = series2y.map((p) => p.strategyValue / baseStrategy),
-      wB = series2y.map((p) => p.benchmarkValue / baseBenchmark);
+    const wS = series2y.map((p) => p.strategy),
+      wB = series2y.map((p) => p.buyHold);
     const rsS = dailyReturns(wS),
       rsB = dailyReturns(wB);
     const years =
@@ -727,136 +387,66 @@ export default function BuyHoldImmersive() {
 
   // Helper to render the full-bleed chart (shared)
   const EvidenceChart = (
-    <div className="space-y-4">
-      <div className="relative h-[420px] w-full">
-        <div className="h-full w-full rounded-[24px] ring-1 ring-white/10 bg-gradient-to-b from-white/5 to-transparent">
+    <motion.div
+      initial={{ clipPath: 'inset(10% 10% 10% 10% round 24px)', opacity: 0.6 }}
+      whileInView={{ clipPath: 'inset(0% 0% 0% 0% round 24px)', opacity: 1 }}
+      viewport={{ once: true, amount: 0.4 }}
+      transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+      className="relative h-[420px] w-full group [perspective:1200px]"
+    >
+      <motion.div
+        whileHover={{ rotateX: -2.5, rotateY: 2.5, scale: 1.01 }}
+        transition={{ type: 'spring', stiffness: 120, damping: 14 }}
+        className="h-full w-full rounded-[24px] ring-1 ring-white/10 bg-gradient-to-b from-white/5 to-transparent"
+      >
         <ResponsiveContainer>
-          <ComposedChart 
-            data={(() => {
-              if (!zoomDomain) return series2y;
-              const [start, end] = zoomDomain;
-              const filtered = series2y.filter(item => item.t >= start && item.t <= end);
-              console.log('Filtering data from', start, 'to', end, 'resulted in', filtered.length, 'points');
-              return filtered.length > 0 ? filtered : series2y;
-            })()} 
-            margin={{ top: 15, right: 70, left: 50, bottom: 80 }}
-            onMouseDown={(e) => {
-              if (e && e.activeLabel) {
-                setZoomDomain([e.activeLabel, e.activeLabel]);
-              }
-            }}
-          >
+          <AreaChart data={series2y} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="gS" x1="0" x2="0" y1="0" y2="1">
                 <stop offset="0%" stopColor="#34d399" stopOpacity={0.6} />
                 <stop offset="100%" stopColor="#34d399" stopOpacity={0} />
               </linearGradient>
-              <linearGradient id="gDCA" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#f59e0b" stopOpacity={0.5} />
-                <stop offset="100%" stopColor="#f59e0b" stopOpacity={0} />
+              <linearGradient id="gB" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stopColor="#94a3b8" stopOpacity={0.5} />
+                <stop offset="100%" stopColor="#94a3b8" stopOpacity={0} />
               </linearGradient>
             </defs>
             <CartesianGrid strokeDasharray="3 3" stroke="#27272a" />
-            <XAxis 
-              dataKey="t" 
-              tick={{ fontSize: 11, fill: "#a1a1aa" }} 
-              tickMargin={8} 
-              minTickGap={24}
-              type="category"
-            />
-            {/* Left Y-axis for portfolio values */}
-            <YAxis 
-              yAxisId="equity" 
-              tick={{ fontSize: 11, fill: "#a1a1aa" }} 
-              tickMargin={8} 
-              domain={["dataMin * 0.95", "dataMax * 1.05"]}
-              tickFormatter={(value) => `$${(value/1000).toFixed(0)}k`}
-            />
-            {/* Right Y-axis for close prices */}
-            <YAxis 
-              yAxisId="price" 
-              orientation="right" 
-              tick={{ fontSize: 11, fill: "#d4d4d8" }} 
-              tickMargin={8} 
-              domain={["dataMin * 0.95", "dataMax * 1.05"]}
-            />
+            <XAxis dataKey="t" tick={{ fontSize: 11, fill: "#a1a1aa" }} tickMargin={8} minTickGap={24} />
+            <YAxis tick={{ fontSize: 11, fill: "#a1a1aa" }} tickMargin={8} domain={["auto", "auto"]} />
             <Tooltip content={<Tip />} />
-            
-            {/* Strategy Area (left axis) */}
             <Area
-              yAxisId="equity"
               type="monotone"
-              dataKey="strategyValue"
+              dataKey="buyHold"
+              name="Buy & Hold"
+              stroke="#94a3b8"
+              strokeWidth={1.25}
+              fill="url(#gB)"
+              isAnimationActive={false}
+            />
+            <Area
+              type="monotone"
+              dataKey="strategy"
               name="Strategy"
               stroke="#34d399"
               strokeWidth={2}
               fill="url(#gS)"
               isAnimationActive={false}
             />
-            
-            {/* DCA Area (left axis) */}
-            <Area
-              yAxisId="equity"
-              type="monotone"
-              dataKey="benchmarkValue"
-              name="DCA"
-              stroke="#f59e0b"
-              strokeWidth={2}
-              fill="url(#gDCA)"
-              isAnimationActive={false}
-            />
-            
-            {/* Close Price Line (right axis) */}
-            <Line
-              yAxisId="price"
-              type="monotone"
-              dataKey="closePrice"
-              name="NASDAQ Close"
-              stroke="#d4d4d8"
-              strokeWidth={1.5}
-              dot={false}
-              isAnimationActive={false}
-            />
-          </ComposedChart>
+          </AreaChart>
         </ResponsiveContainer>
+      </motion.div>
+
+      {/* Overlay chips anchored to top-right */}
+      {stats && (
+        <div className="pointer-events-none absolute top-3 right-3 flex flex-wrap gap-2 justify-end">
+          <MetricChip label="Vol (ann.)" value={pct(stats.strat.vol)} />
+          <MetricChip label="CVaR 95%" value={pct(-stats.strat.cvar)} />
+          <MetricChip label="Hit‑Rate" value={pct(stats.strat.hit)} />
         </div>
-
-
-
-        {/* Range Slider integrated within chart */}
-        {series2y.length > 0 && (
-          <div 
-            className="absolute bottom-5 left-12 right-16 z-10"
-          >
-            <CustomSlider 
-              data={series2y}
-              onRangeChange={(start, end) => {
-                if (start && end) {
-                  setZoomDomain([start, end]);
-                } else {
-                  setZoomDomain(null);
-                }
-              }}
-            />
-          </div>
-        )}
-      </div>
-    </div>
+      )}
+    </motion.div>
   );
-
-  // Show loading screen while data loads
-  if (loading) {
-    return (
-      <div className="min-h-screen w-full text-zinc-100 bg-[#0B0C10] flex items-center justify-center">
-        <Aurora />
-        <Grain />
-        <div className="text-center">
-          <div className="text-2xl font-semibold mb-4">Loading NASDAQ Strategy Data...</div>
-          <div className="text-zinc-400">Loading signals_with_equity.csv</div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen w-full text-zinc-100 bg-[#0B0C10] overflow-x-hidden">
@@ -907,32 +497,27 @@ export default function BuyHoldImmersive() {
                 )}
               </div>
 
-              <AnimatedHeadline text="NASDAQ Strategy vs DCA Performance" />
+              <AnimatedHeadline text="Buy-and-Hold, Explained Like a Story" />
               <p className="max-w-2xl text-zinc-300 text-lg">
-                Real equity performance comparison: Strategy signals vs Dollar-Cost-Averaging from September 2023 to June 2025. Track actual wealth growth with auditable Buy/Hold decisions.
+                A text‑forward, confidence‑scored stance for NASDAQ. We pair a 2‑year historical lens with clear, auditable signals—no hype, just evidence.
               </p>
 
               {/* Upload */}
-              <div className="flex items-center gap-4">
-                <div className="text-sm text-white/60">
-                  📊 NASDAQ Strategy + Equity Data • Sept 2023 - June 2025
-                </div>
-                <label className="inline-flex items-center gap-2 rounded-full bg-white/10 hover:bg-white/15 transition ring-1 ring-white/15 px-4 py-2 cursor-pointer">
-                  <input
-                    type="file"
-                    accept=".csv,text/csv"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (!f) return;
-                      const r = new FileReader();
-                      r.onload = () => setCsvText(String(r.result));
-                      r.readAsText(f);
-                    }}
-                  />
-                  <span className="text-sm">Upload Different CSV</span>
-                </label>
-              </div>
+              <label className="inline-flex items-center gap-2 rounded-full bg-white/10 hover:bg-white/15 transition ring-1 ring-white/15 px-4 py-2 cursor-pointer">
+                <input
+                  type="file"
+                  accept=".csv,text/csv"
+                  className="hidden"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (!f) return;
+                    const r = new FileReader();
+                    r.onload = () => setCsvText(String(r.result));
+                    r.readAsText(f);
+                  }}
+                />
+                <span className="text-sm">Upload CSV</span>
+              </label>
             </motion.div>
 
             {/* Chart */}
@@ -1136,9 +721,9 @@ export default function BuyHoldImmersive() {
       {/* === FLOW MODE: new dedicated animation page/flow (no changes to existing elements) === */}
       {mode === 'flow' && (
         <section className="relative mx-auto max-w-6xl px-4 pt-16 pb-24 space-y-12">
-          <AnimatedHeadline text="NASDAQ Strategy Performance Deep-Dive" />
+          <AnimatedHeadline text="Designing & Evaluating a Buy-and-Hold Signal" />
           <p className="max-w-2xl text-zinc-300 text-lg">
-            Scrollytelling walkthrough of real NASDAQ signals from 2023-2025 — methodology, metrics and evidence with purpose-built animations.
+            Scrollytelling walkthrough of the methodology, metrics and evidence — purpose-built animations here, leaving the main dashboard pristine.
           </p>
 
           {/* Step 1: Method intro card enters */}
@@ -1176,8 +761,6 @@ export default function BuyHoldImmersive() {
               Strategy vs. Buy & Hold (2-year)
             </motion.div>
           </motion.div>
-
-
 
           {/* Step 3: Metric counters */}
           {stats && (
@@ -1242,13 +825,13 @@ if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'production') {
         { date: new Date('2024-01-03'), close: 121, signal: 'BUY' }, // day after → earn 10%
       ];
       const ser = buildSeries(rows);
-      const stratGrowth = ser[2].strategyValue; // should be 1100 when earning 10% on Jan 3
-      console.assert(Math.abs(stratGrowth - 1100) < 1e-9, 'buildSeries BUY-next-day failed');
+      const stratGrowth = ser[2].strategy; // should be 1.1 when earning 10% on Jan 3
+      console.assert(Math.abs(stratGrowth - 1.1) < 1e-9, 'buildSeries BUY-next-day failed');
 
       // twoYearSlice: ensures slicing keeps last point
       const sliced = twoYearSlice([
-        { t: '2022-01-01', strategyValue: 1000, benchmarkValue: 1000, closePrice: 100 },
-        { t: '2025-01-01', strategyValue: 2000, benchmarkValue: 2000, closePrice: 200 },
+        { t: '2022-01-01', strategy: 1, buyHold: 1, benchmark: 1 },
+        { t: '2025-01-01', strategy: 2, buyHold: 2, benchmark: 2 },
       ] as Point[]);
       console.assert(sliced[sliced.length - 1].t === '2025-01-01', 'twoYearSlice failed');
     } catch (err) {
