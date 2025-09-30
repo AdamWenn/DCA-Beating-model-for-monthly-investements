@@ -298,14 +298,37 @@ function HelpOverlay({open,onClose}:{open:boolean; onClose:()=>void}){
     <AnimatePresence>
       {open && (
         <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm">
-          <motion.div initial={{y:20,opacity:0}} animate={{y:0,opacity:1}} exit={{y:20,opacity:0}} transition={{type:'spring',damping:22,stiffness:180}} className="mx-auto mt-24 w-[min(92vw,700px)] rounded-2xl ring-1 ring-white/15 bg-zinc-900/90 p-6 text-white space-y-4">
-            <div className="text-sm uppercase tracking-widest text-white/60">Quick help</div>
-            <ul className="text-sm space-y-2 text-white/80 list-disc pl-5">
-              <li>Press <kbd className="px-1.5 py-0.5 rounded bg-white/10">1</kbd>/<kbd className="px-1.5 py-0.5 rounded bg-white/10">2</kbd>/<kbd className="px-1.5 py-0.5 rounded bg-white/10">3</kbd> to switch scenes.</li>
-              <li>Use the slider under the chart to zoom a time range.</li>
-              <li>Upload your CSV to recalc stats.</li>
-              <li>Hover chips/cards for springy lift. Scroll to reveal counters.</li>
-            </ul>
+          <motion.div initial={{y:20,opacity:0}} animate={{y:0,opacity:1}} exit={{y:20,opacity:0}} transition={{type:'spring',damping:22,stiffness:180}} className="mx-auto mt-24 w-[min(92vw,800px)] rounded-2xl ring-1 ring-white/15 bg-zinc-900/90 p-6 text-white space-y-4">
+            <div className="text-sm uppercase tracking-widest text-white/60">Economics Guide</div>
+            <div className="grid md:grid-cols-2 gap-4 text-sm text-white/85">
+              <div className="space-y-2">
+                <div className="font-semibold text-white/90">What you’re seeing</div>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li><span className="text-cyan-300">Model</span> vs <span className="text-amber-300">DCA</span> equity curves for the selected window.</li>
+                  <li>ROI vs DCA: (1 + Model ROI) / (1 + DCA ROI) − 1.</li>
+                  <li>Sharpe (annualized): mean daily returns / stdev × √252.</li>
+                  <li>Max Drawdown: worst peak-to-trough decline of the equity curve.</li>
+                </ul>
+              </div>
+              <div className="space-y-2">
+                <div className="font-semibold text-white/90">How to read it</div>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>Use the bottom slider to zoom; axes auto-fit to visible data.</li>
+                  <li>Positive ROI vs DCA indicates outperformance relative to steady contributions.</li>
+                  <li>Lower Max DD with similar ROI suggests better downside control.</li>
+                  <li>Sharpe compares risk-adjusted returns (no risk-free rate applied).</li>
+                </ul>
+              </div>
+              <div className="md:col-span-2 space-y-2">
+                <div className="font-semibold text-white/90">Assumptions & caveats</div>
+                <ul className="list-disc pl-5 space-y-1">
+                  <li>Equity series comes from the CSV; fees, slippage, and taxes only if embedded.</li>
+                  <li>DCA means dollar-cost averaging (steady periodic contributions).</li>
+                  <li>Signals are hidden for clarity; focus is on outcomes.</li>
+                  <li>Past performance is not indicative of future results.</li>
+                </ul>
+              </div>
+            </div>
             <div className="flex justify-end"><button onClick={onClose} className="px-3 py-1.5 text-sm rounded bg-white/10 hover:bg-white/15 ring-1 ring-white/15">Close</button></div>
           </motion.div>
         </motion.div>
@@ -370,7 +393,7 @@ export default function ImmersiveAuroraEvidence() {
   useEffect(()=>{
     (async ()=>{
       try {
-        const res = await fetch('/signals_with_equity.csv')
+        const res = await fetch('signals_with_equity.csv')
         if (res.ok) {
           const t = await res.text()
           if (t && t.length > 50) setCsvText(t)
@@ -439,12 +462,9 @@ export default function ImmersiveAuroraEvidence() {
   // Parse + confetti
   useEffect(()=>{ if(!csvText) return; try { setRows(parseCSV(csvText)); setError(null) } catch(e:any){ setError(e?.message||'Parse error') } }, [csvText])
 
-  // Hotkeys
+  // Hotkeys (scene switching removed; keep help toggle)
   useEffect(()=>{
     const onKey=(e:KeyboardEvent)=>{
-      if(e.key==='1') setScene('aurora');
-      if(e.key==='2') setScene('particles');
-      if(e.key==='3') setScene('grid');
       if(e.key==='?') setShowHelp(s=>!s)
     }
     window.addEventListener('keydown', onKey)
@@ -552,20 +572,7 @@ export default function ImmersiveAuroraEvidence() {
 
       <motion.div style={{ scaleX: topBar }} className="fixed left-0 right-0 top-0 h-1 origin-left bg-cyan-300/80 z-40" />
 
-      {/* Scene Switcher */}
-      <div className="fixed top-4 right-4 z-40">
-        <div className="backdrop-blur-md bg-black/30 ring-1 ring-white/10 rounded-xl p-1 flex">
-          {[
-            {k:'aurora', label:'Aurora'},
-            {k:'particles', label:'Particles'},
-            {k:'grid', label:'Grid'}
-          ].map((o:any)=> (
-            <button key={o.k} onClick={()=>setScene(o.k)} className={`relative text-xs px-3 py-1.5 rounded-lg transition ${scene===o.k?'text-black':'text-white/80'}`}>
-              {scene===o.k && <motion.span layoutId="scene-pill" className="absolute inset-0 rounded-lg bg-white" />}<span className="relative z-10 mix-blend-normal">{o.label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+      {/* Scene Switcher removed; always Aurora */}
 
       {/* HERO */}
       <section id="hero" data-key="hero" className="relative mx-auto max-w-6xl px-4 pt-20 pb-10">
@@ -579,7 +586,6 @@ export default function ImmersiveAuroraEvidence() {
             </div>
             {stats && (
               <div className="flex items-center gap-2 flex-wrap">
-                <MetricChip label="CAGR" value={pct(stats.strat.cagr)} />
                 <MetricChip label="Sharpe" value={stats.strat.sharpe.toFixed(2)} />
                 <MetricChip label="Max DD" value={pct(-stats.strat.maxDD)} />
                 <MetricChip label={`TP (${confCounts.TP})`} value={`${((confCounts.TP/confCounts.total)*100).toFixed(0)}%`} />
@@ -589,13 +595,9 @@ export default function ImmersiveAuroraEvidence() {
           </div>
 
           <AnimatedHeadline text="NASDAQ Strategy vs DCA" />
-          <p className="max-w-2xl text-zinc-300 text-lg">Switch scenes (1/2/3). Drag the slider to change interval. Upload your CSV to recompute.</p>
+          <p className="max-w-2xl text-zinc-300 text-lg">Drag the slider to change interval. Uploading is optional.</p>
 
           <div className="flex gap-2">
-            <label className="cursor-pointer">
-              <input type="file" accept=".csv,text/csv" className="hidden" onChange={async (e)=>{ const f = (e.target as HTMLInputElement).files?.[0]; if(!f) return; const t = await f.text(); setCsvText(t) }} />
-              <Magnetic>Upload CSV</Magnetic>
-            </label>
             <Magnetic onClick={()=>setShowHelp(true)}>Help</Magnetic>
           </div>
           {error && <div className="text-sm text-rose-300">{error}</div>}
@@ -621,13 +623,11 @@ export default function ImmersiveAuroraEvidence() {
             </div>
           </div>
           <div className="mt-6 grid md:grid-cols-3 gap-4">
-            <InfoCard title="Edge vs DCA">
+            <InfoCard title="ROI vs DCA">
               {stats ? (
                 <div className="space-y-1">
-                  <div className="text-sm text-white/70">Total return (2Y)</div>
-                  <Counter big value={stats.strat.total} fmt={(n)=>pct(n)} />
-                  <div className="text-sm text-white/70 mt-2">CAGR</div>
-                  <Counter value={stats.strat.cagr} fmt={(n)=>pct(n)} />
+                  <div className="text-sm text-white/70">Relative ROI (Model/DCA)</div>
+                  <Counter big value={((1+stats.strat.total)/(1+stats.bh.total) - 1)} fmt={(n)=>pct(n)} />
                 </div>
               ) : <div className="text-sm text-white/60">Upload a CSV to compute.</div>}
             </InfoCard>
