@@ -587,8 +587,6 @@ export default function ImmersiveAuroraEvidence() {
             {stats && (
               <div className="flex items-center gap-2 flex-wrap">
                 <MetricChip label="Rel ROI (M/D)" value={pct(((1+stats.strat.total)/(1+stats.bh.total))-1)} />
-                <MetricChip label="Model ROI" value={pct(stats.strat.total)} />
-                <MetricChip label="DCA ROI" value={pct(stats.bh.total)} />
                 <MetricChip label="Sharpe M/D" value={`${stats.strat.sharpe.toFixed(2)}/${stats.bh.sharpe.toFixed(2)}`} />
                 <MetricChip label="MaxDD M/D" value={`${pct(-stats.strat.maxDD)}/${pct(-stats.bh.maxDD)}`} />
               </div>
@@ -629,16 +627,11 @@ export default function ImmersiveAuroraEvidence() {
                 <div className="space-y-2">
                   <div className="text-sm text-white/70">Relative ROI (Model/DCA)</div>
                   <Counter big value={((1+stats.strat.total)/(1+stats.bh.total) - 1)} fmt={(n)=>pct(n)} />
-                  <div className="grid grid-cols-2 gap-3 mt-2">
-                    <div>
-                      <div className="text-sm text-white/60">Model ROI</div>
-                      <Counter value={stats.strat.total} fmt={(n)=>pct(n)} />
-                    </div>
-                    <div>
-                      <div className="text-sm text-white/60">DCA ROI</div>
-                      <Counter value={stats.bh.total} fmt={(n)=>pct(n)} />
-                    </div>
-                  </div>
+                  <p className="text-xs text-white/60 leading-relaxed">
+                    Over the selected 2-year window, the strategy shows a positive relative ROI versus steady DCA.
+                    This suggests more capital retained under identical contributions and timing assumptions.
+                    Historical results for research only; not financial advice.
+                  </p>
                 </div>
               ) : <div className="text-sm text-white/60">Upload a CSV to compute.</div>}
             </InfoCard>
