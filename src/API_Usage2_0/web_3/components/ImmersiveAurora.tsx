@@ -392,7 +392,7 @@ export default function ImmersiveAuroraEvidence() {
   const [zoomDomain, setZoomDomain] = useState<[string, string] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [scene,setScene] = useState<'aurora'|'particles'|'grid'>('aurora')
-  const [showHelp,setShowHelp] = useState(false)
+  const [showHelp,setShowHelp] = useState(true)
   // Confetti removed to reduce visual noise and jank
   const [spot,setSpot] = useState({x:50,y:50})
 
@@ -550,19 +550,19 @@ export default function ImmersiveAuroraEvidence() {
         </div>
 
         {/* On-chart legend (color mapping) */}
-        <div className="absolute top-4 left-4 z-10 text-[11px] text-white/80">
-          <div className="flex items-center gap-4">
+        <div className="pointer-events-none absolute top-3 right-4 z-10">
+          <div className="flex items-center gap-3 rounded-md bg-black/30 backdrop-blur px-2 py-1 ring-1 ring-white/10 text-[10px] text-white/80">
             <span className="inline-flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
-              Strategy (green)
+              Strategy - green
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-amber-400"></span>
-              DCA (orange)
+              DCA - orange
             </span>
             <span className="inline-flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-white"></span>
-              NASDAQ Close (white)
+              NASDAQ Close - white
             </span>
           </div>
         </div>
