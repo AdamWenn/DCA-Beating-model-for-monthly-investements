@@ -1,4 +1,4 @@
-'use client'
+ï»¿'use client'
 
 import React, { useMemo, useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence, useScroll, useTransform, useSpring, useMotionValue } from 'framer-motion'
@@ -302,18 +302,18 @@ function HelpOverlay({open,onClose, relROI}:{open:boolean; onClose:()=>void; rel
             <div className="text-sm uppercase tracking-widest text-white/60">Economics Summary</div>
             {typeof relROI === 'number' && (
               <div className="rounded-xl ring-1 ring-emerald-400/30 bg-emerald-400/10 p-4">
-                <div className="text-xs text-emerald-300">ROI vs DCA — Relative ROI (Model/DCA)</div>
+                <div className="text-xs text-emerald-300">ROI vs DCA â€” Relative ROI (Model/DCA)</div>
                 <div className="mt-1 text-4xl font-semibold tracking-tight text-emerald-300">{pct(relROI)}</div>
                 <div className="mt-1 text-xs text-white/70">Over the selected window, the strategy shows positive relative ROI versus steady DCA. This suggests more capital retained under identical contributions and timing assumptions. Historical results for research only; not financial advice.</div>
               </div>
             )}
             <div className="grid md:grid-cols-2 gap-4 text-sm text-white/85">
               <div className="space-y-2">
-                <div className="font-semibold text-white/90">What you’re seeing</div>
+                <div className="font-semibold text-white/90">What youâ€™re seeing</div>
                 <ul className="list-disc pl-5 space-y-1">
                   <li><span className="text-cyan-300">Model</span> vs <span className="text-amber-300">DCA</span> equity curves for the selected window.</li>
                   <li>ROI vs DCA: (1 + Model ROI) / (1 + DCA ROI) - 1.</li>
-                  <li>Sharpe (annualized): mean daily returns / stdev × v252.</li>
+                  <li>Sharpe (annualized): mean daily returns / stdev Ã— v252.</li>
                   <li>Max Drawdown: worst peak-to-trough decline of the equity curve.</li>
                 </ul>
               </div>
@@ -592,7 +592,7 @@ export default function ImmersiveAuroraEvidence() {
       <Scene stage={scene} />
       <Grain />
       <MouseTrail />
-      <HelpOverlay open={showHelp} onClose={()=>setShowHelp(false)} relROI={relROI} />
+      <HelpOverlay open={showHelp} onClose={()=>setShowHelp(false)} relROI={stats ? ((1 + stats.strat.total) / (1 + stats.bh.total) - 1) : null} />
       <ScrollDots />
 
       <motion.div style={{ scaleX: topBar }} className="fixed left-0 right-0 top-0 h-1 origin-left bg-cyan-300/80 z-40" />
@@ -623,7 +623,7 @@ export default function ImmersiveAuroraEvidence() {
 
           {typeof relROI === 'number' && (
             <motion.div initial={{opacity:0, y:8}} whileInView={{opacity:1, y:0}} viewport={{ once:true }} transition={{type:'spring', stiffness:220, damping:22}} className="mt-3 rounded-2xl ring-1 ring-emerald-400/30 bg-emerald-400/10 p-4 max-w-xl">
-              <div className="text-xs uppercase tracking-widest text-emerald-300">ROI vs DCA — Relative ROI (Model/DCA)</div>
+              <div className="text-xs uppercase tracking-widest text-emerald-300">ROI vs DCA â€” Relative ROI (Model/DCA)</div>
               <div className="mt-1 text-4xl md:text-5xl font-semibold tracking-tight text-emerald-300">{pct(relROI)}</div>
               <div className="mt-1 text-xs text-white/70">Positive relative ROI over this 2-year window suggests more capital retained vs steady DCA under identical contributions. Historical results for research only; not financial advice.</div>
             </motion.div>
@@ -766,3 +766,4 @@ if (typeof window !== 'undefined' && (typeof process === 'undefined' || (process
     } catch(err){ console.warn('[self-tests]', err) }
   })()
 }
+
