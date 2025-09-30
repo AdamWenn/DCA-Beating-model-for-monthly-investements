@@ -385,7 +385,7 @@ export default function ImmersiveAuroraEvidence() {
   const [zoomDomain, setZoomDomain] = useState<[string, string] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [scene,setScene] = useState<'aurora'|'particles'|'grid'>('aurora')
-  const [showHelp,setShowHelp] = useState(false)
+  const [showHelp,setShowHelp] = useState(true)
   // Confetti removed to reduce visual noise and jank
   const [spot,setSpot] = useState({x:50,y:50})
 
@@ -586,10 +586,11 @@ export default function ImmersiveAuroraEvidence() {
             </div>
             {stats && (
               <div className="flex items-center gap-2 flex-wrap">
-                <MetricChip label="Sharpe" value={stats.strat.sharpe.toFixed(2)} />
-                <MetricChip label="Max DD" value={pct(-stats.strat.maxDD)} />
-                <MetricChip label={`TP (${confCounts.TP})`} value={`${((confCounts.TP/confCounts.total)*100).toFixed(0)}%`} />
-                <MetricChip label={`FP (${confCounts.FP})`} value={`${((confCounts.FP/confCounts.total)*100).toFixed(0)}%`} />
+                <MetricChip label="Rel ROI (M/D)" value={pct(((1+stats.strat.total)/(1+stats.bh.total))-1)} />
+                <MetricChip label="Model ROI" value={pct(stats.strat.total)} />
+                <MetricChip label="DCA ROI" value={pct(stats.bh.total)} />
+                <MetricChip label="Sharpe M/D" value={`${stats.strat.sharpe.toFixed(2)}/${stats.bh.sharpe.toFixed(2)}`} />
+                <MetricChip label="MaxDD M/D" value={`${pct(-stats.strat.maxDD)}/${pct(-stats.bh.maxDD)}`} />
               </div>
             )}
           </div>
@@ -625,9 +626,19 @@ export default function ImmersiveAuroraEvidence() {
           <div className="mt-6 grid md:grid-cols-3 gap-4">
             <InfoCard title="ROI vs DCA">
               {stats ? (
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <div className="text-sm text-white/70">Relative ROI (Model/DCA)</div>
                   <Counter big value={((1+stats.strat.total)/(1+stats.bh.total) - 1)} fmt={(n)=>pct(n)} />
+                  <div className="grid grid-cols-2 gap-3 mt-2">
+                    <div>
+                      <div className="text-sm text-white/60">Model ROI</div>
+                      <Counter value={stats.strat.total} fmt={(n)=>pct(n)} />
+                    </div>
+                    <div>
+                      <div className="text-sm text-white/60">DCA ROI</div>
+                      <Counter value={stats.bh.total} fmt={(n)=>pct(n)} />
+                    </div>
+                  </div>
                 </div>
               ) : <div className="text-sm text-white/60">Upload a CSV to compute.</div>}
             </InfoCard>
