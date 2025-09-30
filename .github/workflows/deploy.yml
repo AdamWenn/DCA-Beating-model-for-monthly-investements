@@ -27,17 +27,17 @@ jobs:
           node-version: 20
 
       - name: Install deps
-        working-directory: web_3
+        working-directory: src/API_Usage2_0/web_3
         run: npm ci
 
       - name: Build
-        working-directory: web_3
+        working-directory: src/API_Usage2_0/web_3
         run: npm run build
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: web_3/dist
+          path: src/API_Usage2_0/web_3/dist
 
   deploy:
     environment:
@@ -49,4 +49,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
