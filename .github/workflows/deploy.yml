@@ -21,6 +21,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Adjust fetch path for Pages
+        working-directory: src/API_Usage2_0/web_3
+        run: |
+          if grep -R "fetch('/signals_with_equity.csv')" -n components/ImmersiveAurora.tsx > /dev/null 2>&1; then
+            sed -i "s|fetch('/signals_with_equity.csv')|fetch('signals_with_equity.csv')|g" components/ImmersiveAurora.tsx
+          fi
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
