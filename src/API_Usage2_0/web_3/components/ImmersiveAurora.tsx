@@ -293,13 +293,20 @@ function ConfettiBurst({ run }: { run:boolean }){
   )
 }
 
-function HelpOverlay({open,onClose}:{open:boolean; onClose:()=>void}){
+function HelpOverlay({open,onClose, relROI}:{open:boolean; onClose:()=>void; relROI?: number|null}){
   return (
     <AnimatePresence>
       {open && (
         <motion.div initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm">
           <motion.div initial={{y:20,opacity:0}} animate={{y:0,opacity:1}} exit={{y:20,opacity:0}} transition={{type:'spring',damping:22,stiffness:180}} className="mx-auto mt-24 w-[min(92vw,800px)] rounded-2xl ring-1 ring-white/15 bg-zinc-900/90 p-6 text-white space-y-4">
-            <div className="text-sm uppercase tracking-widest text-white/60">Economics Guide</div>
+            <div className="text-sm uppercase tracking-widest text-white/60">Economics Summary</div>
+            {typeof relROI === 'number' && (
+              <div className="rounded-xl ring-1 ring-emerald-400/30 bg-emerald-400/10 p-4">
+                <div className="text-xs text-emerald-300">ROI vs DCA — Relative ROI (Model/DCA)</div>
+                <div className="mt-1 text-4xl font-semibold tracking-tight text-emerald-300">{pct(relROI)}</div>
+                <div className="mt-1 text-xs text-white/70">Over the selected window, the strategy shows positive relative ROI versus steady DCA. This suggests more capital retained under identical contributions and timing assumptions. Historical results for research only; not financial advice.</div>
+              </div>
+            )}
             <div className="grid md:grid-cols-2 gap-4 text-sm text-white/85">
               <div className="space-y-2">
                 <div className="font-semibold text-white/90">What you’re seeing</div>
@@ -542,6 +549,24 @@ export default function ImmersiveAuroraEvidence() {
           </ResponsiveContainer>
         </div>
 
+        {/* On-chart legend (color mapping) */}
+        <div className="absolute top-4 left-4 z-10 text-[11px] text-white/80">
+          <div className="flex items-center gap-4">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-emerald-400"></span>
+              Strategy (green)
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-amber-400"></span>
+              DCA (orange)
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-white"></span>
+              NASDAQ Close (white)
+            </span>
+          </div>
+        </div>
+
         {/* Slider */}
         {series2y.length>0 && (
           <div className="absolute bottom-5 left-12 right-16 z-10">
@@ -567,7 +592,7 @@ export default function ImmersiveAuroraEvidence() {
       <Scene stage={scene} />
       <Grain />
       <MouseTrail />
-      <HelpOverlay open={showHelp} onClose={()=>setShowHelp(false)} />
+      <HelpOverlay open={showHelp} onClose={()=>setShowHelp(false)} relROI={relROI} />
       <ScrollDots />
 
       <motion.div style={{ scaleX: topBar }} className="fixed left-0 right-0 top-0 h-1 origin-left bg-cyan-300/80 z-40" />
@@ -595,6 +620,14 @@ export default function ImmersiveAuroraEvidence() {
 
           <AnimatedHeadline text="NASDAQ Strategy vs DCA" />
           <p className="max-w-2xl text-zinc-300 text-lg">Drag the slider to change interval. Uploading is optional.</p>
+
+          {typeof relROI === 'number' && (
+            <motion.div initial={{opacity:0, y:8}} whileInView={{opacity:1, y:0}} viewport={{ once:true }} transition={{type:'spring', stiffness:220, damping:22}} className="mt-3 rounded-2xl ring-1 ring-emerald-400/30 bg-emerald-400/10 p-4 max-w-xl">
+              <div className="text-xs uppercase tracking-widest text-emerald-300">ROI vs DCA — Relative ROI (Model/DCA)</div>
+              <div className="mt-1 text-4xl md:text-5xl font-semibold tracking-tight text-emerald-300">{pct(relROI)}</div>
+              <div className="mt-1 text-xs text-white/70">Positive relative ROI over this 2‑year window suggests more capital retained vs steady DCA under identical contributions. Historical results for research only; not financial advice.</div>
+            </motion.div>
+          )}
 
           <div className="flex gap-2">
             <Magnetic onClick={()=>setShowHelp(true)}>Help</Magnetic>
