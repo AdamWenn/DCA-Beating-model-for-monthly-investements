@@ -19,10 +19,16 @@ env/
 
 # Data files
 *.csv
+# Allow specific CSV files needed for the web app
+!src/API_Usage2_0/web_6/public/signals_with_equity.csv
 *.pkl
 
 # Logs
 *.log
+
+# API Configuration (keep API keys private)
+src/api_config.py
+.env
 
 # OS
 .DS_Store
