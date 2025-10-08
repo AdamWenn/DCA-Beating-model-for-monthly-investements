@@ -15,7 +15,22 @@ Små TODOs lämnas för studenten (t.ex. lägga till en ytterligare RTF-variant)
 """
 import numpy as np
 import pandas as pd
-from .indicators import  log_return, mom_tema, rtf_recursive_ses_H_eq_n, tema, sma, momentum, rate_of_change, rsma, mom_ema, rc_tema, rtf
+import sys
+import os
+
+# Add project root to path if not already there
+project_root = os.path.join(os.path.dirname(__file__), '..')
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
+# Try different import strategies
+try:
+    from src.indicators import log_return, mom_tema, rtf_recursive_ses_H_eq_n, tema, sma, momentum, rate_of_change, rsma, mom_ema, rc_tema, rtf
+except ImportError:
+    try:
+        from .indicators import log_return, mom_tema, rtf_recursive_ses_H_eq_n, tema, sma, momentum, rate_of_change, rsma, mom_ema, rc_tema, rtf
+    except ImportError:
+        from indicators import log_return, mom_tema, rtf_recursive_ses_H_eq_n, tema, sma, momentum, rate_of_change, rsma, mom_ema, rc_tema, rtf
 
 def build_feature_set(df: pd.DataFrame, price_col="Close") -> pd.DataFrame:
     px = df[price_col].astype(float)

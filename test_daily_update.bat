@@ -4,7 +4,7 @@ echo.
 
 echo Step 1: Testing step1.py...
 cd /d "%~dp0"
-python src\API_Usage2_0\step1.py
+py src\API_Usage2_0\step1.py
 if %errorlevel% neq 0 (
     echo ERROR: step1.py failed
     pause
@@ -13,7 +13,7 @@ if %errorlevel% neq 0 (
 
 echo.
 echo Step 2: Testing step2.py...
-python src\API_Usage2_0\step2.py
+py src\API_Usage2_0\step2.py
 if %errorlevel% neq 0 (
     echo ERROR: step2.py failed
     pause
