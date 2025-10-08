@@ -48,13 +48,17 @@ jobs:
         
     - name: Run step1 - Data fetch and prediction
       run: |
-        # Run from project root with proper Python path
-        python -m src.API_Usage2_0.step1
+        # Set PYTHONPATH and run step1.py directly
+        export PYTHONPATH="${PYTHONPATH}:$(pwd)"
+        cd src/API_Usage2_0
+        python step1.py
         
     - name: Run step2 - Backtest and analysis  
       run: |
-        # Run from project root with proper Python path  
-        python -m src.API_Usage2_0.step2
+        # Set PYTHONPATH and run step2.py directly
+        export PYTHONPATH="${PYTHONPATH}:$(pwd)"
+        cd src/API_Usage2_0
+        python step2.py
         
     - name: Copy CSV to web6 public folder
       run: |

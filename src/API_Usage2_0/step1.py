@@ -3,16 +3,29 @@ import sys
 import os
 
 
+import sys
+import os
+
 # Add the project root to Python path and run as module
 project_root = os.path.join(os.path.dirname(__file__), '..', '..')
 sys.path.insert(0, project_root)
 
 import pandas as pd
 import numpy as np
-from src.features import build_feature_set
-from src.fetch_data import fetch_sp500_from_fred
-from src.labels import labels_give_data_set_with_0_or_1
-from src.model import fit_predict, make_mlp_bagging
+
+# Try different import strategies
+try:
+    from src.features import build_feature_set
+    from src.fetch_data import fetch_sp500_from_fred
+    from src.labels import labels_give_data_set_with_0_or_1
+    from src.model import fit_predict, make_mlp_bagging
+except ImportError:
+    # If that fails, try from parent directory
+    sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+    from features import build_feature_set
+    from fetch_data import fetch_sp500_from_fred
+    from labels import labels_give_data_set_with_0_or_1
+    from model import fit_predict, make_mlp_bagging
 
 last_train_date = pd.to_datetime("1900-01-01")
 clf = None
@@ -89,6 +102,9 @@ def get_predictions(date_most_recent, df_feat_label):
         print(y_proba)
 
     if y_proba is not None:
+        # DEBUG: Print probability for current date
+        print(f"DEBUG TRAINING: {date_most_recent.date()} -> P(Buy)={y_proba[0, 1]:.3f}, P(Hold)={y_proba[0, 0]:.3f}")
+        
         # Store it
         y_proba_storage.append(y_proba)
         # Get Date and Close for current date
@@ -106,11 +122,93 @@ def get_predictions(date_most_recent, df_feat_label):
         print(df_signals.tail())
 
     # A very fancy print of the probabilities
-    all_probs = np.vstack(y_proba_storage)
-    print(all_probs.shape)  # (700, 2) if binary classification
+    if len(y_proba_storage) > 0:
+        all_probs = np.vstack(y_proba_storage)
+        print(all_probs.shape)  # (700, 2) if binary classification
+    else:
+        print("No predictions made yet")
+
+
+def add_recent_signals():
+    """
+    Generate trading signals for recent dates that don't have labels (after June 26, 2025).
+    
+    This function:
+    1. Uses the already-trained model from something() 
+    2. Fetches recent market data (June 27, 2025 onwards)
+    3. Generates Buy/Hold predictions for these dates
+    4. Adds them to df_signals with empty TN_TP_FP_FN (since we can't evaluate future performance)
+    
+    Note: Must be called after something() to ensure the model is trained.
+    """
+    global clf, df_signals
+    
+    if clf is None:
+        print("ERROR: No trained model available. Run something() first.")
+        return
+    
+    # Get the latest date in our current signals (should be around June 26, 2025)
+    last_signal_date = df_signals["Date"].max()
+    print(f"Last evaluated signal date: {last_signal_date}")
+    
+    # Get fresh market data including recent dates
+    print("Fetching latest market data...")
+    df_recent = fetch_sp500_from_fred(start="1999-01-01")
+    df_feat_recent = build_feature_set(df_recent, price_col="Close")
+    
+    # Drop rows with missing technical indicators
+    feature_cols = [c for c in df_feat_recent.columns if c not in ("Close", "Date")]
+    df_feat_clean = df_feat_recent.dropna(subset=feature_cols)
+    
+    # Find dates after our last evaluated signal (recent unlabeled dates)
+    recent_dates = df_feat_clean[df_feat_clean["Date"] > last_signal_date].copy()
+    
+    if len(recent_dates) > 0:
+        print(f"Generating {len(recent_dates)} recent predictions:")
+        print(f"  Date range: {recent_dates['Date'].min()} to {recent_dates['Date'].max()}")
+        
+        threshold = 0.3  # Same threshold as in get_predictions()
+        
+        for _, row in recent_dates.iterrows():
+            # Prepare features for prediction
+            features = row[feature_cols].values.reshape(1, -1)
+            y_proba = clf.predict_proba(features)
+            signal = "Buy" if y_proba[0, 1] > threshold else "Hold"
+            
+            # DEBUG: Print probability information
+            print(f"DEBUG: {row['Date'].date()} -> P(Buy)={y_proba[0, 1]:.3f}, P(Hold)={y_proba[0, 0]:.3f} -> {signal}")
+            
+            # Add to signals DataFrame with empty evaluation column
+            new_signal = pd.DataFrame({
+                "Date": [row["Date"]],
+                "Close": [row["Close"]],
+                "Signal": [signal],
+                "TN_TP_FP_FN": [""]  # Empty - can't evaluate without 70 days of future data
+            })
+            
+            df_signals = pd.concat([df_signals, new_signal], ignore_index=True)
+        
+        print(f"✓ Successfully added {len(recent_dates)} recent trading signals")
+    else:
+        print("No recent dates found (all dates already have signals)")
+
 
 if __name__ == "__main__":
     something()
 
+    # Add recent signals using the trained model
+    print("\n=== Adding recent signals ===")
+    add_recent_signals()
+
     # Export the signals to CSV
     df_signals.to_csv("signals.csv", index=False)
+    
+    # Show summary
+    with_eval = df_signals[df_signals["TN_TP_FP_FN"] != ""]
+    without_eval = df_signals[df_signals["TN_TP_FP_FN"] == ""]
+    
+    print(f"\n=== FINAL SUMMARY ===")
+    print(f"Total signals: {len(df_signals)}")
+    print(f"With evaluation: {len(with_eval)}")
+    print(f"Recent predictions: {len(without_eval)}")
+    print(f"Date range: {df_signals['Date'].min()} to {df_signals['Date'].max()}")
