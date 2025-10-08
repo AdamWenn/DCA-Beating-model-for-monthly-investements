@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smarter Monthly Investing — Wireframe</title>
+  <style>
+    :root{
+      --bg:#0b0d12;--panel:#0f131a;--muted:#b4bdc6;--text:#eef2f6;--accent:#7cf0bd;--accent-2:#8fb7ff;--orange:#f2a33b;--stroke:#202734;--chip:#151b24;--radius:16px;--shadow:0 6px 24px rgba(0,0,0,.25);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,ui-sans-serif,system-ui;-webkit-font-smoothing:antialiased;background:radial-gradient(1200px 800px at 70% -10%,#162035 0%,rgba(11,13,18,0) 60%),var(--bg);color:var(--text)}
+    .container{max-width:1150px;margin:0 auto;padding:24px}
+
+    /* TOP BAR */
+    .topbar{display:flex;justify-content:space-between;align-items:center;background:var(--panel);border:1px solid var(--stroke);border-radius:12px;padding:10px 18px;margin-bottom:16px;font-size:14px}
+    .topbar-left{display:flex;gap:18px;align-items:center}
+    .roi-smallcaps{font-variant-caps:small-caps;letter-spacing:.04em;color:var(--accent);font-weight:700}
+
+    /* HERO */
+    .hero-grid{display:grid;grid-template-columns:1.05fr .95fr;gap:28px;align-items:center;margin-top:12px}
+    @media(max-width:1000px){.hero-grid{grid-template-columns:1fr}}
+    h1{font-size:48px;line-height:1.08;margin:8px 0}
+    .lead{color:#d7dee6;max-width:680px}
+    .cta-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;align-items:center}
+    .btn{appearance:none;border:1px solid var(--stroke);background:var(--chip);color:var(--text);padding:10px 14px;border-radius:12px;font-weight:600;cursor:pointer}
+    .btn.primary{background:linear-gradient(180deg,rgba(124,240,189,.12),rgba(124,240,189,.06));border-color:rgba(124,240,189,.5)}
+    .btn.ghost{background:transparent}
+
+    /* ROI badge (big + small math) */
+    .roi-badge{background:var(--panel);border:1px solid var(--stroke);padding:10px 14px;border-radius:12px;display:grid;gap:4px}
+    .roi-badge .big{font-size:16px;font-weight:800;color:var(--accent)}
+    .roi-badge .small{font-size:12px;color:var(--muted)}
+
+    /* VISUAL CARD */
+    .orbit{background:var(--panel);border:1px solid var(--stroke);border-radius:18px;min-height:420px;display:grid;place-items:center;box-shadow:var(--shadow)}
+
+    /* SECTION shell */
+    section{border:1px solid var(--stroke);background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.0));border-radius:var(--radius);box-shadow:var(--shadow);padding:22px;margin:22px 0}
+    section h2{margin:0 0 6px;font-size:22px}
+    section p{margin:6px 0 14px;color:var(--muted)}
+
+    /* CHART */
+    .legend{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0}
+    .key{display:inline-flex;align-items:center;gap:8px;color:#cfd6de}
+    .swatch{width:12px;height:12px;border-radius:3px}
+    .chart{height:380px;border:1px dashed #2a3241;border-radius:12px;display:grid;place-items:center;font-size:13px;color:#aeb7c2}
+
+    /* LISTS */
+    .bullets{display:grid;gap:8px}
+    .bullets li{background:var(--chip);border:1px solid var(--stroke);border-radius:12px;padding:10px 12px}
+
+    /* STEPPER */
+    .stepper{display:grid;gap:12px}
+    .step{display:none}
+    .step.active{display:grid;gap:10px}
+    .field{display:grid;gap:6px}
+    .field input,.field select{background:#0e1219;border:1px solid var(--stroke);border-radius:12px;padding:10px 12px;color:var(--text)}
+    .btn.disabled{opacity:.55;cursor:not-allowed}
+
+    footer{color:var(--muted);padding:26px 0 60px}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- TOP BAR (kept) -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <span style="color:var(--muted)">Today</span>
+        <span style="color:var(--accent);font-weight:600">BUY</span>
+        <span>2025-06-16</span>
+      </div>
+      <div class="roi-smallcaps"></div>
+    </div>
+
+    <!-- HERO -->
+    <div class="hero-grid">
+      <div>
+        <h1>Smarter monthly investing — powered by data</h1>
+        <p class="lead">Vår modell anpassar dina månatliga köp efter marknadsläget och förbättrar traditionell DCA. Identifiera <em>köpfönster</em> och få bättre tajming varje månad.</p>
+        <div class="cta-row">
+          <button class="btn primary">See Buy Windows</button>
+          <button class="btn ghost">Join Monthly Reminder (Upcoming)</button>
+          <div class="roi-badge">
+            <div class="big">+1.53% mer avkastning</div>
+            <div class="small">Har sedan xxxx-xx-xx gett +1.53% mer avkastningen än att investera månatligen den 10:e varje månad. Rel ROI (M/D) = (Modell − DCA) / DCA = +1.53%</div>
+          </div>
+        </div>
+      </div>
+      <div class="orbit"><div style="color:var(--muted);font-size:14px;">[ Feature Orbit Graphic Placeholder ]</div></div>
+    </div>
+
+    <!-- 1) EQUITY GRAPH -->
+    <section aria-label="Equity growth chart">
+      <h2>Kapitalutveckling</h2>
+      <p>Nasdaq Close, Vår modell och DCA över tid.</p>
+      <div class="legend">
+        <span class="key"><span class="swatch" style="background:var(--accent-2)"></span> Nasdaq Close</span>
+        <span class="key"><span class="swatch" style="background:var(--accent)"></span> Modell</span>
+        <span class="key"><span class="swatch" style="background:var(--orange)"></span> DCA</span>
+      </div>
+      <div class="chart">[ Graf placeholder ]</div>
+    </section>
+
+    <!-- 2) CLASSIFIERS & LABELS -->
+    <section aria-label="Klassificerare & Etiketter">
+      <h2>Klassificerare & etiketter</h2>
+      <ul class="bullets">
+        <li><strong>Labels:</strong> <em>Label 1</em> när indexet når +10% minst en gång inom 70 handelsdagar utan att falla mer än en tredjedel av målet i motsatt riktning; annars <em>Label 0</em>.</li>
+        <li><strong>Estimator:</strong> imblearn.ensemble.BalancedBaggingClassifier (parallelliserad med <code>n_jobs=-1</code>).</li>
+        <li><strong>Neuralt nät (MLP):</strong> <em>MinMaxScaler</em> → MLP (1 dolt lager = 4× features, ReLU, <code>alpha=0.001</code>, utgång: sigmoid) ⇒ sannolikhet för klass “1”.</li>
+        <li><strong>Syfte:</strong> Skatta om förutsättningarna är gynnsamma för ett 70‑dagars mål ("applicability windows").</li>
+      </ul>
+    </section>
+
+    <!-- 3) MODEL w/ SOURCES -->
+    <section aria-label="Modellen och källhänvisning">
+      <h2>Modellen — dynamiska trendindikatorer</h2>
+      <p>Baserad på Bareket & Pârv (2024). Adaptiva indikatorer (EMA, TEMA, MomEma, MomTema, RCTema, RTF och SES→FWD SMA) för medellångsiktiga rörelser (~70 handelsdagar). Mål: identifiera optimala inträdespunkter.</p>
+      <ul class="bullets">
+        <li>DCA ger stabilitet; modellen försöker skapa överavkastning i trendfaser. I andra perioder kan DCA vara bättre — i linje med EMH/Random Walk.</li>
+        <li>Indikatorerna kombineras till signaler för <strong>köpfönster</strong>.</li>
+      </ul>
+    </section>
+
+    <!-- 4) INDICATORS -->
+    <section aria-label="Indikatorer">
+      <h2>Indikatorer — feature dots</h2>
+      <p>Klicka för att se nuvärde och formel.</p>
+      <div class="legend">
+        <span class="key"><span class="swatch" style="background:var(--accent)"></span> Momentum</span>
+        <span class="key"><span class="swatch" style="background:var(--accent-2)"></span> Trend</span>
+        <span class="key"><span class="swatch" style="background:var(--orange)"></span> Relativ nivå</span>
+      </div>
+      <div class="orbit" style="min-height:320px"><div style="color:var(--muted);font-size:14px;">[ Alla indikatorer — dots placeholder ]</div></div>
+      <ul class="bullets" style="margin-top:10px">
+        <li>EMA / TEMA</li>
+        <li>MomEma / MomTema</li>
+        <li>RCTema</li>
+        <li>RTF (Relative Trend Forecast)</li>
+        <li>SES → FWD SMA</li>
+      </ul>
+    </section>
+
+    <!-- 5) SUBSCRIPTION (step-by-step) -->
+    <section aria-label="Prenumeration">
+      <h2>Prenumeration — steg för steg <span style="opacity:.7">(kommer snart)</span></h2>
+      <p>Gör det enkelt: ett steg i taget så det känns lätt att komma igång.</p>
+      <div class="stepper" id="sub-form">
+        <div class="step active" id="s1">
+          <button class="btn primary" onclick="nextStep(2)">Jag vill ha en månads‑påminnelse</button>
+        </div>
+        <div class="step" id="s2">
+          <div class="field" style="max-width:280px">
+            <label for="amount">Belopp (SEK)</label>
+            <input id="amount" type="number" placeholder="Ex. 1500" />
+          </div>
+          <div class="cta-row"><button class="btn" onclick="nextStep(3)">Fortsätt</button></div>
+        </div>
+        <div class="step" id="s3">
+          <div class="field" style="max-width:220px">
+            <label for="day">Dag i månaden</label>
+            <select id="day"><option>1</option><option>5</option><option>10</option><option>15</option><option>20</option><option>25</option><option>28</option></select>
+          </div>
+          <div class="cta-row"><button class="btn disabled" aria-disabled="true" title="Snart tillgängligt">Bekräfta prenumeration</button></div>
+        </div>
+      </div>
+    </section>
+
+    <footer>© 2025. Wireframe (startup‑stil).</footer>
+  </div>
+
+  <script>
+    function nextStep(n){
+      document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+      const el=document.getElementById('s'+n); if(el) el.classList.add('active');
+      window.scrollTo({top:el.offsetTop-80, behavior:'smooth'});
+    }
+  </script>
+</body>
+</html>

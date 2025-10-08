@@ -1,0 +1,126 @@
+/* Simple visual prototype – no frameworks */
+:root{
+  --bg:#0B0D12;--surface:#11141A;--surfaceAlt:#171B22;--text:#E8ECF2;--muted:#A7B0BF;
+  --accentModel:#1EC7B9;--accentDCA:#8A93A3;--warn:#F39C12;--error:#E74C3C;
+  --grid:rgba(255,255,255,0.08);--windowFill:rgba(30,199,185,0.12);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:radial-gradient(1200px 800px at 80% -20%,#0F141C,transparent),linear-gradient(#0B0D12,#0C1016);
+  color:var(--text);font:16px/1.5 system-ui, -apple-system, Segoe UI, Roboto, Inter, Arial, sans-serif}
+.container{max-width:1080px;margin:0 auto;padding:0 20px}
+.nav{position:fixed;top:-72px;left:0;right:0;height:64px;display:flex;align-items:center;transition:transform .25s ease, background .25s ease;transform:translateY(-100%);background:transparent;z-index:20}
+.nav.show{transform:translateY(0);background:rgba(17,20,26,0.72);backdrop-filter:saturate(1.2) blur(10px);border-bottom:1px solid rgba(255,255,255,0.06)}
+.nav .inner{display:flex;align-items:center;justify-content:space-between}
+.logo{font-weight:700;letter-spacing:.3px}
+.nav a{color:var(--muted);text-decoration:none;margin-left:16px}
+.btn{display:inline-flex;align-items:center;gap:8px;background:var(--accentModel);color:#051311;border:none;padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer}
+.btn.secondary{background:transparent;color:var(--text);border:1px solid rgba(255,255,255,0.14)}
+.hero{padding:120px 0 48px}
+.hero h1{font-size:44px;line-height:1.1;margin:0 0 12px}
+.hero p{color:var(--muted);margin:0 0 20px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.panel{background:var(--surface);border:1px solid rgba(255,255,255,0.06);border-radius:14px;padding:18px}
+.orbit{height:520px;display:flex;align-items:center;justify-content:center}
+/* minimalist orbit; legend removed per feedback */
+.mini-chart{height:300px}
+.scenes{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin:24px 0}
+.scene{background:var(--surfaceAlt);border:1px solid rgba(255,255,255,0.06);border-radius:12px;padding:16px;transition:transform .15s ease, box-shadow .15s ease}
+.scene:hover{transform:translateY(-4px);box-shadow:0 10px 30px rgba(0,0,0,0.25)}
+.trust{margin:16px 0;color:var(--muted);font-size:14px}
+
+.chart{height:440px}
+.controls{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.toggle{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid rgba(255,255,255,0.12);border-radius:10px;cursor:pointer;color:var(--muted)}
+
+.footer{margin:56px 0 24px;color:var(--muted);font-size:13px}
+
+/* Tooltip */
+.tooltip{position:fixed;pointer-events:none;background:#0E1218;border:1px solid rgba(255,255,255,0.12);padding:8px 10px;border-radius:8px;font-size:13px;color:var(--text);box-shadow:0 6px 30px rgba(0,0,0,0.35);z-index:50}
+.tooltip .eq{font-family:"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;color:#CFE9E6;opacity:.9}
+
+/* Help Drawer */
+.help-trigger{position:fixed;right:16px;bottom:16px;z-index:25}
+.drawer{position:fixed;right:16px;left:16px;bottom:-100%;height:86vh;background:var(--surface);border:1px solid rgba(255,255,255,0.12);border-radius:14px 14px 0 0;transition:transform .25s ease;transform:translateY(100%);z-index:30}
+.drawer.show{transform:translateY(0)}
+.drawer .head{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.drawer .body{padding:16px;overflow:auto;height:calc(100% - 54px)}
+
+/* Story sections */
+.section-full{min-height:90vh;display:grid;place-items:center;margin:18px 0;position:relative;overflow:hidden}
+.section-full .inner{max-width:980px;padding:40px}
+.strip{margin:18px 0;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:12px;padding:12px 16px}
+.strip strong{color:#D2F3EF}
+.faq details{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px 12px}
+.faq details+details{margin-top:10px}
+.faq summary{cursor:pointer;color:var(--text);font-weight:600}
+.faq p{color:var(--muted)}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .28s ease, transform .28s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.split{display:block;overflow:hidden}
+.split .line{display:block;transform:translateY(100%);transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.split.visible .line{transform:translateY(0)}
+
+/* Hero goes full viewport */
+.vh-hero{min-height:96vh;display:grid;align-items:center}
+.mask-title{position:relative;display:inline-block}
+.mask-title .line{display:block;overflow:hidden}
+.mask-title .line span{display:block;transform:translateY(110%)}
+.mask-title.visible .line span{animation:lineIn .6s cubic-bezier(.2,.8,.2,1) forwards}
+.mask-title .line:nth-child(2) span{animation-delay:.08s}
+@keyframes lineIn{to{transform:translateY(0)}}
+
+/* Clip-path reveal section */
+.clip-reveal{clip-path:inset(20% 20% 20% 20% round 24px);transition:clip-path .7s cubic-bezier(.2,.8,.2,1)}
+.clip-reveal.visible{clip-path:inset(0% 0% 0% 0% round 24px)}
+
+/* Parallax layers */
+[data-parallax]{will-change:transform}
+
+/* Orbit delta pulse */
+@keyframes pulseDelta{0%{transform:scale(1)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+.delta-strong{animation:pulseDelta .8s ease}
+
+/* Progress dots nav */
+.progress{position:fixed;right:18px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;z-index:22}
+.progress a{width:10px;height:10px;border-radius:50%;border:1px solid rgba(255,255,255,0.35);background:transparent;display:block}
+.progress a.active{background:var(--accentModel);border-color:var(--accentModel)}
+
+/* Advanced: masked headings & band morphs */
+.mask-title{position:relative;display:inline-block}
+.mask-title .line{display:block;overflow:hidden}
+.mask-title .line span{display:block;transform:translateY(110%);}
+.mask-title.visible .line span{animation:lineIn .6s cubic-bezier(.2,.8,.2,1) forwards}
+.mask-title .line:nth-child(2) span{animation-delay:.08s}
+@keyframes lineIn{to{transform:translateY(0)}}
+
+/* Animated bands for compare */
+.band{fill:var(--windowFill);rx:10;opacity:.0;transform:translateY(-8px);transition:opacity .25s ease, transform .25s ease}
+.band.show{opacity:.95;transform:translateY(0)}
+
+/* Line draw effect */
+.line-path{stroke-dasharray:2000;stroke-dashoffset:2000;animation:draw 1.4s ease forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+
+/* KPI drawer */
+.kpi-drawer{position:fixed;right:16px;top:76px;width:280px;max-height:70vh;overflow:auto;background:rgba(17,20,26,0.88);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:12px;transform:translateX(120%);transition:transform .25s ease;z-index:24}
+.kpi-drawer.show{transform:translateX(0)}
+.kpi-drawer h4{margin:0 0 8px;font-size:14px}
+.kpi-row{display:flex;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,0.06);padding:6px 0;color:var(--muted)}
+
+/* Fancy toggle */
+.switch{position:relative;display:inline-flex;align-items:center;gap:8px}
+.switch input{appearance:none;width:44px;height:26px;background:rgba(255,255,255,0.12);border-radius:999px;position:relative;outline:none;cursor:pointer;transition:background .2s}
+.switch input:checked{background:rgba(30,199,185,0.35)}
+.switch input::after{content:'';position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
+.switch input:checked::after{transform:translateX(18px)}
+
+/* subscribe ribbon removed per feedback */
+
+@media (max-width:920px){
+  .grid{grid-template-columns:1fr}
+  .orbit{height:380px}
+  .scenes{grid-template-columns:1fr}
+  .hero{padding-top:84px}
+  
+}

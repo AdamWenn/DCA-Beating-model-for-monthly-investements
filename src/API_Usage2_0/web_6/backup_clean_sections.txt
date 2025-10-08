@@ -1,0 +1,13 @@
+I need to remove broken FeatureOrbit code from lines approximately 1211-1692 in SwedishInvestmentImmersive.tsx
+
+The import has been added: import FeatureOrbitClean from './FeatureOrbit_Clean'
+The usage has been changed to: <FeatureOrbitClean className="w-full" size={420} csvData={rows} />
+
+Now I need to remove the old broken FeatureOrbit implementation that's causing syntax errors.
+
+The FeatureOrbit_Clean.tsx component is working correctly and contains:
+- Smart positioning without overlaps
+- Category-based orbital positioning (RTF, Momentum, Standard)
+- Size-based visualization using percentage change
+- Interactive hover effects
+- Color-coded categories (Blue, Green, Orange)

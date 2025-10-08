@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Model vs DCA — Home (Prototype)</title>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+  <div class="nav" aria-label="Site navigation">
+    <div class="container inner">
+      <div class="logo">EdgeSignals</div>
+      <nav>
+        <a href="compare.html">Compare</a>
+        <a href="#method">Method</a>
+        <a href="subscribe.html" class="btn" style="margin-left:16px">Subscribe</a>
+      </nav>
+    </div>
+  </div>
+
+  <main class="container">
+    <section id="s1" class="hero grid vh-hero clip-reveal">
+      <div>
+        <h1 class="mask-title"><span class="line"><span>Smarter timing</span></span><span class="line"><span>for your monthly investing</span></span></h1>
+        <p>Problem: steady DCA ignores changing conditions. Solution: highlight better monthly buy windows when indicators align; otherwise default to DCA.</p>
+        <div style="display:flex; gap:12px; flex-wrap:wrap">
+          <a class="btn" href="compare.html" onclick="try{KPI.push({type:'cta_compare'})}catch(_){}}">Compare strategies</a>
+          <a class="btn secondary" href="subscribe.html">Join monthly reminder (Upcoming)</a>
+        </div>
+      </div>
+      <div class="panel orbit" id="orbit" data-tour></div>
+      <div data-parallax style="position:absolute;right:-80px;top:20%;width:280px;height:280px;border-radius:50%;background:radial-gradient(closest-side, rgba(30,199,185,0.18), transparent)"></div>
+    </section>
+
+    <section class="panel mini-chart clip-reveal" id="s2">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <div style="font-weight:600">Preview — Model vs DCA</div>
+        <a href="compare.html" style="color:var(--muted);text-decoration:none">Open full comparison →</a>
+      </div>
+      <svg viewBox="0 0 800 220" width="100%" height="220" role="img" aria-label="Preview chart">
+        <defs>
+          <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="rgba(30,199,185,0.35)"/>
+            <stop offset="100%" stop-color="rgba(30,199,185,0.0)"/>
+          </linearGradient>
+        </defs>
+        <rect x="0" y="0" width="800" height="220" fill="transparent"/>
+        <g opacity="0.35">
+          <path d="M0 190 H800" stroke="var(--grid)"/>
+          <path d="M0 150 H800" stroke="var(--grid)"/>
+          <path d="M0 110 H800" stroke="var(--grid)"/>
+          <path d="M0 70 H800" stroke="var(--grid)"/>
+          <path d="M0 30 H800" stroke="var(--grid)"/>
+        </g>
+        <path d="M20 170 C 120 140, 200 160, 300 130 S 500 120, 620 95 S 760 110, 780 90" stroke="var(--accentDCA)" stroke-width="2" fill="none" stroke-dasharray="6 4"/>
+        <path d="M20 170 C 120 130, 200 140, 300 110 S 500 100, 620 70 S 760 80, 780 60" stroke="var(--accentModel)" stroke-width="2.25" fill="none"/>
+        <path d="M20 170 C 120 130, 200 140, 300 110 S 500 100, 620 70 S 760 80, 780 60 L780 220 L20 220 Z" fill="url(#g1)"/>
+      </svg>
+    </section>
+
+    <div class="strip clip-reveal" id="problem-solution">
+      <strong>Problem →</strong> Timing monthly buys blindly can miss better entries. <strong>Solution →</strong> Use medium‑term trend indicators to spot windows; if none, stick to DCA.
+    </div>
+
+    <!-- Immersive sections replacing cards -->
+    <section id="s3" class="panel section-full clip-reveal" style="background:linear-gradient(180deg, rgba(30,199,185,0.10), rgba(0,0,0,0));">
+      <div class="inner">
+        <h2 class="mask-title"><span class="line"><span>Discover indicator clusters</span></span><span class="line"><span>at a glance</span></span></h2>
+        <p class="reveal" style="color:var(--muted);max-width:640px">Orbit encodes change vs previous — clusters and pulses reveal improving or deteriorating conditions without reading dense text.</p>
+      </div>
+      <div data-parallax style="position:absolute;left:-120px;bottom:10%;width:360px;height:360px;border-radius:50%;background:radial-gradient(closest-side, rgba(138,147,163,0.18), transparent)"></div>
+    </section>
+
+    <section id="s4" class="panel section-full clip-reveal">
+      <div class="inner">
+        <h2 class="mask-title"><span class="line"><span>Compare vs DCA</span></span><span class="line"><span>when windows appear</span></span></h2>
+        <div class="reveal" style="margin-top:8px">
+          <svg viewBox="0 0 800 280" width="100%" height="260" role="img" aria-label="Buy windows preview">
+            <rect x="0" y="0" width="800" height="280" fill="transparent"/>
+            <g opacity="0.35">
+              <path d="M0 240 H800" stroke="var(--grid)"/>
+              <path d="M0 200 H800" stroke="var(--grid)"/>
+              <path d="M0 160 H800" stroke="var(--grid)"/>
+              <path d="M0 120 H800" stroke="var(--grid)"/>
+            </g>
+            <rect x="120" y="30" width="140" height="210" fill="var(--windowFill)" rx="8"/>
+            <rect x="520" y="30" width="100" height="210" fill="var(--windowFill)" rx="8"/>
+            <path d="M20 220 C 120 180, 200 200, 300 160 S 500 140, 620 110 S 760 130, 780 100" stroke="var(--accentDCA)" stroke-width="2" fill="none" stroke-dasharray="6 4"/>
+            <path d="M20 220 C 120 160, 200 180, 300 130 S 500 120, 620 80 S 760 90, 780 60" stroke="var(--accentModel)" stroke-width="2.25" fill="none"/>
+          </svg>
+        </div>
+        <div class="reveal" style="margin-top:12px"><a class="btn" href="compare.html" onclick="try{KPI.push({type:'cta_compare'})}catch(_){}}">Open full comparison</a></div>
+      </div>
+    </section>
+
+    <!-- Integrated Research/Method -->
+    <section id="method" class="panel clip-reveal" style="margin-top:18px">
+      <h2 class="mask-title"><span class="line"><span>Why it works</span></span><span class="line"><span>(Method)</span></span></h2>
+      <ul style="color:var(--muted)">
+        <li>Adaptive feature subset picks the most relevant indicators for the current regime.</li>
+        <li>Dynamic trend indicators project near‑term direction using exponential smoothing.</li>
+        <li>Applicability matters: when no edge is detected, default to DCA.</li>
+      </ul>
+      <div class="faq" style="margin-top:8px">
+        <details>
+          <summary>What is DCA?</summary>
+          <p>Dollar‑cost averaging means investing equal amounts at regular intervals. Source: Bayes/City DCA paper (PDF).</p>
+        </details>
+        <details>
+          <summary>How do you define a “buy window”?</summary>
+          <p>We look for conditions where the model forecasts a ≥10% rise within 70 trading days without an adverse move > one‑third of the target.</p>
+        </details>
+      </div>
+      <div style="margin-top:8px;color:var(--muted);font-size:14px">
+        Research: Bareket & Pârv, IEEE Access (2024), DOI 10.1109/ACCESS.2024.3412989. <a href="research.html">Full details →</a>
+      </div>
+    </section>
+
+    <!-- Story sections: compact, high-signal, scroll reveals -->
+    <section class="panel section-full">
+      <div class="inner">
+        <h2 class="split"><span class="line">Understand the Feature Orbit</span><span class="line">at a glance</span></h2>
+        <p class="reveal" style="color:var(--muted);max-width:640px">Each dot is an indicator used by the model. Color shows direction, ring distance shows magnitude. Hover for value and its equation. Positive clusters hint at improving conditions.</p>
+      </div>
+    </section>
+
+    <section class="panel section-full">
+      <div class="inner">
+        <h2 class="split"><span class="line">See buy windows</span><span class="line">then compare with DCA</span></h2>
+        <div class="reveal" style="margin-top:8px">
+          <svg viewBox="0 0 800 280" width="100%" height="260" role="img" aria-label="Buy windows preview">
+            <rect x="0" y="0" width="800" height="280" fill="transparent"/>
+            <g opacity="0.35">
+              <path d="M0 240 H800" stroke="var(--grid)"/>
+              <path d="M0 200 H800" stroke="var(--grid)"/>
+              <path d="M0 160 H800" stroke="var(--grid)"/>
+              <path d="M0 120 H800" stroke="var(--grid)"/>
+            </g>
+            <rect x="120" y="30" width="140" height="210" fill="var(--windowFill)" rx="8"/>
+            <rect x="520" y="30" width="100" height="210" fill="var(--windowFill)" rx="8"/>
+            <path d="M20 220 C 120 180, 200 200, 300 160 S 500 140, 620 110 S 760 130, 780 100" stroke="var(--accentDCA)" stroke-width="2" fill="none" stroke-dasharray="6 4"/>
+            <path d="M20 220 C 120 160, 200 180, 300 130 S 500 120, 620 80 S 760 90, 780 60" stroke="var(--accentModel)" stroke-width="2.25" fill="none"/>
+          </svg>
+        </div>
+        <p class="reveal" style="color:var(--muted)">Windows highlight periods our indicators project favorable conditions. If none appear, default to DCA.</p>
+      </div>
+    </section>
+
+    <section class="panel section-full">
+      <div class="inner">
+        <h2 class="split"><span class="line">Join monthly reminders</span><span class="line">tailored to your payday</span></h2>
+        <p class="reveal" style="color:var(--muted);max-width:640px">Tell us when you get paid and how much you invest. We’ll email buy windows when edge is present—otherwise we’ll nudge you to stick to DCA.</p>
+        <div class="reveal" style="margin-top:12px"><a class="btn" href="subscribe.html">Join waitlist</a></div>
+      </div>
+    </section>
+
+    <div class="trust">Based on peer‑reviewed research (IEEE Access, 2024). Educational only; not investment advice.</div>
+
+    <footer class="footer">© EdgeSignals — Privacy • Terms</footer>
+  </main>
+
+  <button class="btn help-trigger" id="helpOpen" aria-label="Open help">?</button>
+  <nav class="progress" aria-label="Page progress">
+    <a href="#s1"></a>
+    <a href="#s2"></a>
+    <a href="#s3"></a>
+    <a href="#s4"></a>
+  </nav>
+  
+  <div class="drawer" id="helpDrawer" aria-modal="true" role="dialog">
+    <div class="head">
+      <div style="font-weight:600">Help</div>
+      <button class="btn secondary" id="helpClose" aria-label="Close help">Close</button>
+    </div>
+    <div class="body">
+      <h3>Vad är DCA?</h3>
+      <p>Dollar‑cost averaging innebär att investera lika mycket regelbundet över tid.</p>
+      <h3>Hur funkar modellen?</h3>
+      <p>Vi analyserar indikatorer och projicerar trender för att hitta bättre köpfönster än DCA under vissa marknadslägen.</p>
+    </div>
+  </div>
+
+  <script src="kpi.js"></script>
+  <script src="app.js"></script>
+  </body>
+  </html>
