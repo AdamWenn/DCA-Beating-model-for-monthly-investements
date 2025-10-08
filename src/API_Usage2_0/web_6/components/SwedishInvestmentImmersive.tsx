@@ -1501,20 +1501,6 @@ const AdvancedCalculator: React.FC<{ onSignupOpen?: () => void; onSignupSuccess?
       <div className="grid md:grid-cols-2 gap-8">
         {/* Input Section */}
         <div className="space-y-6">
-          {/* Debug Info */}
-          <div className="bg-black/20 border border-yellow-500/30 rounded-lg p-3 text-xs">
-            <div className="text-yellow-400 font-medium mb-1">Debug Info:</div>
-            <div className="text-gray-300">
-              CSV Data: {csvData.length} rader laddade
-              {csvData.length > 0 && (
-                <div>
-                  Första datum: {csvData[0]?.date.toLocaleDateString('sv-SE')}<br/>
-                  Sista datum: {csvData[csvData.length-1]?.date.toLocaleDateString('sv-SE')}
-                </div>
-              )}
-            </div>
-          </div>
-          
           <div>
             <label className="block text-white font-medium mb-3">Månatlig investering (SEK)</label>
             <input
