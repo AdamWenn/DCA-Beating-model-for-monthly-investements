@@ -7,6 +7,11 @@ on:
     # TEMPORÄRT: Kör var 6:e timme för testning (ta bort senare)
     # - cron: '0 */6 * * *'
   
+  # TEMPORÄRT: Kör på push för att testa (ta bort senare)
+  push:
+    branches: [ main ]
+    paths: [ '.github/workflows/daily-update.yml' ]
+  
   # Möjlighet att köra manuellt från GitHub webbgränssnitt
   workflow_dispatch:
 
@@ -28,7 +33,13 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pandas numpy yfinance scikit-learn requests python-dotenv
+        pip install pandas numpy yfinance scikit-learn requests python-dotenv fredapi
+        
+    - name: Set up environment and working directory
+      run: |
+        # Create __init__.py files for proper Python modules
+        touch src/__init__.py
+        touch src/API_Usage2_0/__init__.py
         
     - name: Configure git
       run: |
@@ -37,13 +48,13 @@ jobs:
         
     - name: Run step1 - Data fetch and prediction
       run: |
-        cd src/API_Usage2_0
-        python step1.py
+        # Run from project root with proper Python path
+        python -m src.API_Usage2_0.step1
         
     - name: Run step2 - Backtest and analysis  
       run: |
-        cd src/API_Usage2_0
-        python step2.py
+        # Run from project root with proper Python path  
+        python -m src.API_Usage2_0.step2
         
     - name: Copy CSV to web6 public folder
       run: |
