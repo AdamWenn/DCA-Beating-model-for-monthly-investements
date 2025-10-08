@@ -1279,6 +1279,7 @@ interface CalculatorResult {
   modelValue: number
   advantage: number
   advantagePercent: number
+  error?: string
 }
 
 const AdvancedCalculator: React.FC<{ onSignupOpen?: () => void; onSignupSuccess?: () => void }> = ({ onSignupOpen, onSignupSuccess }) => {
@@ -1313,63 +1314,81 @@ const AdvancedCalculator: React.FC<{ onSignupOpen?: () => void; onSignupSuccess?
   }>>([])
 
   useEffect(() => {
-    // Load CSV data
-    fetch('/signals_with_equity.csv')
-      .then(response => response.text())
-      .then(text => {
-        const lines = text.trim().split('\n')
-        const data = lines.slice(1).map(line => {
-          const [dateStr, close, signal, , equity, dca] = line.split(',')
-          return {
-            date: new Date(dateStr),
-            close: parseFloat(close),
-            signal,
-            equity: parseFloat(equity),
-            dca: parseFloat(dca)
+    // Load CSV data - try multiple paths for GitHub Pages compatibility
+    const tryFetch = async () => {
+      const possiblePaths = [
+        './signals_with_equity.csv',
+        '/signals_with_equity.csv',
+        'signals_with_equity.csv',
+        '/DCA-Beating-model-for-monthly-investements/signals_with_equity.csv'
+      ]
+      
+      for (const path of possiblePaths) {
+        try {
+          console.log(`Trying to fetch CSV from: ${path}`)
+          const response = await fetch(path)
+          if (!response.ok) {
+            console.log(`Failed to fetch from ${path}: ${response.status}`)
+            continue
           }
-        }).filter(row => !isNaN(row.equity) && !isNaN(row.dca))
-        
-        setCsvData(data.sort((a, b) => a.date.getTime() - b.date.getTime()))
-      })
-      .catch(error => {
-        console.error('Error loading CSV:', error)
-        // Fallback to generated data if CSV fails
-        setCsvData(generateFallbackData())
-      })
+          
+          const text = await response.text()
+          if (!text || text.trim().length === 0) {
+            console.log(`Empty response from ${path}`)
+            continue
+          }
+          
+          console.log(`Successfully loaded CSV from: ${path}`)
+          const lines = text.trim().split('\n')
+          
+          if (lines.length < 2) {
+            console.log('CSV has insufficient data')
+            continue
+          }
+          
+          const data = lines.slice(1).map(line => {
+            const [dateStr, close, signal, , equity, dca] = line.split(',')
+            return {
+              date: new Date(dateStr),
+              close: parseFloat(close),
+              signal,
+              equity: parseFloat(equity),
+              dca: parseFloat(dca)
+            }
+          }).filter(row => !isNaN(row.equity) && !isNaN(row.dca))
+          
+          if (data.length > 0) {
+            setCsvData(data.sort((a, b) => a.date.getTime() - b.date.getTime()))
+            console.log(`Loaded ${data.length} rows of CSV data`)
+            return
+          }
+        } catch (error) {
+          console.log(`Error fetching from ${path}:`, error)
+        }
+      }
+      
+      // If all paths fail, leave csvData empty
+      console.log('All CSV fetch attempts failed - no data available')
+      setCsvData([])
+    }
+    
+    tryFetch()
   }, [])
 
-  const generateFallbackData = () => {
-    // Generate fallback data for demonstration
-    const data = []
-    const startDate = new Date('2023-01-01')
-    let dcaValue = 1000
-    let modelValue = 1000
-    
-    for (let i = 0; i < 400; i++) {
-      const date = new Date(startDate)
-      date.setDate(date.getDate() + i)
-      
-      // Simulate market movement
-      const marketChange = (Math.random() - 0.48) * 0.02 // Slight upward bias
-      dcaValue *= (1 + marketChange)
-      
-      // Model performs better on average
-      const modelMultiplier = Math.random() > 0.6 ? 1.002 : 0.999
-      modelValue *= (1 + marketChange) * modelMultiplier
-      
-      data.push({
-        date,
-        close: 4000 + i * 2 + Math.random() * 100,
-        signal: Math.random() > 0.7 ? 'Buy' : 'Hold',
-        equity: modelValue,
-        dca: dcaValue
-      })
-    }
-    return data
-  }
-
   const calculateROI = async () => {
-    if (csvData.length === 0) return
+    if (csvData.length === 0) {
+      setResults({
+        period: selectedPeriod === '6' ? '6 månader' : selectedPeriod === '12' ? '1 år' : '2 år',
+        monthlyAmount,
+        totalInvested: 0,
+        dcaValue: 0,
+        modelValue: 0,
+        advantage: 0,
+        advantagePercent: 0,
+        error: 'Ingen data tillgänglig. CSV-filen kunde inte laddas från servern.'
+      })
+      return
+    }
     
     setIsCalculating(true)
     
@@ -1387,6 +1406,20 @@ const AdvancedCalculator: React.FC<{ onSignupOpen?: () => void; onSignupSuccess?
     ).sort((a, b) => a.date.getTime() - b.date.getTime())
     
     if (periodData.length < 2) {
+      console.log(`Insufficient data for calculation: ${periodData.length} rows found for ${monthsBack} months back`)
+      console.log('Available date range:', csvData.length > 0 ? 
+        `${csvData[0].date.toLocaleDateString()} - ${csvData[csvData.length-1].date.toLocaleDateString()}` : 
+        'No data')
+      setResults({
+        period: `${monthsBack} månader`,
+        monthlyAmount,
+        totalInvested: 0,
+        dcaValue: 0,
+        modelValue: 0,
+        advantage: 0,
+        advantagePercent: 0,
+        error: `Otillräcklig data för ${monthsBack} månader (${periodData.length} datapunkter)`
+      })
       setIsCalculating(false)
       return
     }
@@ -1468,6 +1501,20 @@ const AdvancedCalculator: React.FC<{ onSignupOpen?: () => void; onSignupSuccess?
       <div className="grid md:grid-cols-2 gap-8">
         {/* Input Section */}
         <div className="space-y-6">
+          {/* Debug Info */}
+          <div className="bg-black/20 border border-yellow-500/30 rounded-lg p-3 text-xs">
+            <div className="text-yellow-400 font-medium mb-1">Debug Info:</div>
+            <div className="text-gray-300">
+              CSV Data: {csvData.length} rader laddade
+              {csvData.length > 0 && (
+                <div>
+                  Första datum: {csvData[0]?.date.toLocaleDateString('sv-SE')}<br/>
+                  Sista datum: {csvData[csvData.length-1]?.date.toLocaleDateString('sv-SE')}
+                </div>
+              )}
+            </div>
+          </div>
+          
           <div>
             <label className="block text-white font-medium mb-3">Månatlig investering (SEK)</label>
             <input
@@ -1504,10 +1551,12 @@ const AdvancedCalculator: React.FC<{ onSignupOpen?: () => void; onSignupSuccess?
           
           <button
             onClick={calculateROI}
-            disabled={isCalculating || monthlyAmount <= 0}
+            disabled={isCalculating || monthlyAmount <= 0 || csvData.length === 0}
             className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-600 disabled:cursor-not-allowed text-white font-medium py-3 rounded-lg transition-all"
           >
-            {isCalculating ? 'Beräknar...' : 'Beräkna Skillnad'}
+            {isCalculating ? 'Beräknar...' : 
+             csvData.length === 0 ? 'Ingen data tillgänglig' : 
+             'Beräkna Skillnad'}
           </button>
         </div>
         
@@ -1519,46 +1568,56 @@ const AdvancedCalculator: React.FC<{ onSignupOpen?: () => void; onSignupSuccess?
               animate={{ opacity: 1, y: 0 }}
               className="space-y-4"
             >
-              <div className="bg-black/30 rounded-lg p-4 border border-white/10">
-                <h4 className="text-white font-semibold mb-3">Resultat för {results.period}</h4>
-                
-                <div className="space-y-3 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Totalt investerat:</span>
-                    <span className="text-white font-mono">{results.totalInvested.toLocaleString('sv-SE')} SEK</span>
-                  </div>
+              {results.error ? (
+                <div className="bg-red-900/30 rounded-lg p-4 border border-red-500/30">
+                  <h4 className="text-red-400 font-semibold mb-2">Fel vid beräkning</h4>
+                  <p className="text-red-200 text-sm">{results.error}</p>
+                  <p className="text-gray-400 text-xs mt-2">
+                    Försök med en kortare tidsperiod eller kontrollera att data är tillgänglig.
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-black/30 rounded-lg p-4 border border-white/10">
+                  <h4 className="text-white font-semibold mb-3">Resultat för {results.period}</h4>
                   
-                  <hr className="border-white/10" />
-                  
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">DCA Slutvärde:</span>
-                    <span className="text-blue-400 font-mono">{results.dcaValue.toLocaleString('sv-SE', {maximumFractionDigits: 0})} SEK</span>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <span className="text-gray-300">Modell Slutvärde:</span>
-                    <span className="text-purple-400 font-mono">{results.modelValue.toLocaleString('sv-SE', {maximumFractionDigits: 0})} SEK</span>
-                  </div>
-                  
-                  <hr className="border-white/10" />
-                  
-                  <div className={`${results.advantage >= 0 ? 'bg-gradient-to-r from-green-500/20 to-blue-500/20 border-green-500/30' : 'bg-gradient-to-r from-red-500/20 to-orange-500/20 border-red-500/30'} rounded p-3 border`}>
-                    <div className="flex justify-between items-center">
-                      <span className="text-white font-semibold">
-                        {results.advantage >= 0 ? 'Fördel med modellen:' : 'DCA presterade bättre:'}
-                      </span>
-                      <div className="text-right">
-                        <div className={`font-mono font-bold ${results.advantage >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                          {results.advantage >= 0 ? '+' : ''}{results.advantage.toLocaleString('sv-SE', {maximumFractionDigits: 0})} SEK
-                        </div>
-                        <div className={`text-xs ${results.advantage >= 0 ? 'text-green-300' : 'text-red-300'}`}>
-                          ({results.advantagePercent >= 0 ? '+' : ''}{results.advantagePercent.toFixed(1)}% skillnad)
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-300">Totalt investerat:</span>
+                      <span className="text-white font-mono">{results.totalInvested.toLocaleString('sv-SE')} SEK</span>
+                    </div>
+                    
+                    <hr className="border-white/10" />
+                    
+                    <div className="flex justify-between">
+                      <span className="text-gray-300">DCA Slutvärde:</span>
+                      <span className="text-blue-400 font-mono">{results.dcaValue.toLocaleString('sv-SE', {maximumFractionDigits: 0})} SEK</span>
+                    </div>
+                    
+                    <div className="flex justify-between">
+                      <span className="text-gray-300">Modell Slutvärde:</span>
+                      <span className="text-purple-400 font-mono">{results.modelValue.toLocaleString('sv-SE', {maximumFractionDigits: 0})} SEK</span>
+                    </div>
+                    
+                    <hr className="border-white/10" />
+                    
+                    <div className={`${results.advantage >= 0 ? 'bg-gradient-to-r from-green-500/20 to-blue-500/20 border-green-500/30' : 'bg-gradient-to-r from-red-500/20 to-orange-500/20 border-red-500/30'} rounded p-3 border`}>
+                      <div className="flex justify-between items-center">
+                        <span className="text-white font-semibold">
+                          {results.advantage >= 0 ? 'Fördel med modellen:' : 'DCA presterade bättre:'}
+                        </span>
+                        <div className="text-right">
+                          <div className={`font-mono font-bold ${results.advantage >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                            {results.advantage >= 0 ? '+' : ''}{results.advantage.toLocaleString('sv-SE', {maximumFractionDigits: 0})} SEK
+                          </div>
+                          <div className={`text-xs ${results.advantage >= 0 ? 'text-green-300' : 'text-red-300'}`}>
+                            ({results.advantagePercent >= 0 ? '+' : ''}{results.advantagePercent.toFixed(1)}% skillnad)
+                          </div>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </motion.div>
           )}
           
