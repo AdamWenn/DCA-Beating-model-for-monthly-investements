@@ -4,6 +4,8 @@ on:
   schedule:
     # Kör varje dag kl 01:00 UTC (02:00 svensk tid på vintern, 03:00 på sommaren)
     - cron: '0 1 * * *'
+    # TEMPORÄRT: Kör var 6:e timme för testning (ta bort senare)
+    # - cron: '0 */6 * * *'
   
   # Möjlighet att köra manuellt från GitHub webbgränssnitt
   workflow_dispatch:
