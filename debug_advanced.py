@@ -313,7 +313,10 @@ def create_debug_notebook():
                 "cell_type": "code",
                 "source": [
                     "import os\n",
-                    "os.environ['FRED_API_KEY'] = '8d9ad11bf6016ba0a68f2f6f56f056ba'\n",
+                    "from dotenv import load_dotenv\n",
+                    "load_dotenv()\n",
+                    "if 'FRED_API_KEY' not in os.environ:\n",
+                    "    raise RuntimeError('FRED_API_KEY environment variable is missing. Set it before using this notebook.')\n",
                     "\n",
                     "from debug_advanced import MLDebugger, setup_plotting\n",
                     "import warnings\n",

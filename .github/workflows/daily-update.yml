@@ -33,7 +33,7 @@ jobs:
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pandas numpy yfinance scikit-learn requests python-dotenv fredapi imbalanced-learn
+        pip install pandas numpy yfinance scikit-learn requests python-dotenv fredapi imbalanced-learn matplotlib
         
     - name: Set up environment and working directory
       run: |
@@ -46,6 +46,17 @@ jobs:
         git config --global user.name 'GitHub Actions Bot'
         git config --global user.email 'actions@github.com'
         
+    - name: Ensure FRED_API_KEY secret
+      env:
+        FRED_API_KEY_SECRET: ${{ secrets.FRED_API_KEY }}
+      run: |
+        if [ -z "${FRED_API_KEY_SECRET}" ]; then
+          echo "FRED_API_KEY secret is not configured. Please add it to the repository secrets." >&2
+          exit 1
+        fi
+        echo "FRED_API_KEY=${FRED_API_KEY_SECRET}" >> $GITHUB_ENV
+        echo "FRED_API_KEY secret detected and exported."
+
     - name: Run step1 - Data fetch and prediction
       run: |
         # Set PYTHONPATH and run step1.py directly
@@ -57,12 +68,14 @@ jobs:
       run: |
         # Set PYTHONPATH and run step2.py directly
         export PYTHONPATH="${PYTHONPATH}:$(pwd)"
+        export MPLBACKEND=Agg
         cd src/API_Usage2_0
         python step2.py
         
-    - name: Copy CSV to web6 public folder
+    - name: Copy CSV artifacts
       run: |
-        cp signals_with_equity.csv src/API_Usage2_0/web_6/public/signals_with_equity.csv
+        cp src/API_Usage2_0/signals_with_equity.csv signals_with_equity.csv
+        cp src/API_Usage2_0/signals_with_equity.csv src/API_Usage2_0/web_6/public/signals_with_equity.csv
         
     - name: Check for changes
       id: verify-changed-files

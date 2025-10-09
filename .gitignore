@@ -19,8 +19,8 @@ env/
 
 # Data files
 *.csv
-# Allow specific CSV files needed for the web app
-!src/API_Usage2_0/web_6/public/signals_with_equity.csv
+# Allow CSV files needed for the web app
+!src/API_Usage2_0/web_6/**/*.csv
 *.pkl
 
 # Logs
@@ -29,6 +29,7 @@ env/
 # API Configuration (keep API keys private)
 src/api_config.py
 .env
+fredapi
 
 # OS
 .DS_Store

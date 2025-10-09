@@ -11,7 +11,10 @@ Denna mapp speglar projektet men med fyllda TODOs och små förbättringar.
 ## Körning
 Samma som original:
 ```bash
-$env:FRED_API_KEY="8d9ad11bf6016ba0a68f2f6f56f056ba"
-pip install pandas numpy scikit-learn imbalanced-learn requests python-dateutil matplotlib
+# Replace with your own FRED API token
+$env:FRED_API_KEY="<YOUR_FRED_API_KEY>"
+pip install pandas numpy scikit-learn imbalanced-learn requests python-dateutil matplotlib python-dotenv
 python -m src.main_example
 ```
+
+> 💡 Tip: copy `.env.example` to `.env` and populate `FRED_API_KEY` to avoid exporting the variable manually.
