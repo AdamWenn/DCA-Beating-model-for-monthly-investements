@@ -21,6 +21,7 @@ env/
 *.csv
 # Allow CSV files needed for the web app
 !src/API_Usage2_0/web_6/**/*.csv
+!signals_with_equity.csv
 *.pkl
 
 # Logs
