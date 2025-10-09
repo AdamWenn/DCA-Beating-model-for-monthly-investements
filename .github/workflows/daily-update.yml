@@ -1,5 +1,8 @@
 name: Daily Data Update
 
+permissions:
+  contents: write
+
 on:
   schedule:
     # Kör varje dag kl 01:00 UTC (02:00 svensk tid på vintern, 03:00 på sommaren)
