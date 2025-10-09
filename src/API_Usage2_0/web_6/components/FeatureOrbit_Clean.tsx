@@ -74,40 +74,146 @@ const FeatureOrbit: React.FC<FeatureOrbitProps> = ({ className = '', size = 520,
     visible: false
   })
 
-  // Calculate real feature values from CSV data
+  // Calculate real feature values from CSV data or use actual model features
   const calculateFeatures = useMemo(() => {
     if (!csvData.length) {
-      // Fallback to static values if no data
+      // Use exact indicators from the Interactive Indicator Showcase
       return [
-        { name: 'RSI', value: 65.2, prev: 62.1, eq: 'RSI(14)', description: 'Relative Strength Index - momentumindikator som mäter hastigheten och förändringen av prisrörelser', category: 'momentum' as const },
-        { name: 'MACD', value: 0.032, prev: 0.028, eq: 'MACD(12,26,9)', description: 'Moving Average Convergence Divergence - trend-följande momentumindikator', category: 'momentum' as const },
-        { name: 'EMA Ratio', value: 1.025, prev: 1.018, eq: 'EMA(20)/EMA(50)', description: 'Exponential Moving Average ratio - kortvariga till långvariga trendförhållande', category: 'momentum' as const },
-        { name: 'PE Ratio', value: 18.5, prev: 19.2, eq: 'Price/Earnings', description: 'Pris-till-vinst-förhållande - värderingsmått för aktier', category: 'standard' as const },
-        { name: 'PB Ratio', value: 2.1, prev: 2.3, eq: 'Price/Book', description: 'Pris-till-bokförda värde - värderingsindikator baserad på företagets nettotillgångar', category: 'standard' as const },
-        { name: 'ROE', value: 0.142, prev: 0.138, eq: 'Return on Equity', description: 'Avkastning på eget kapital - mäter företagets lönsamhet relativt aktieägarnas kapital', category: 'standard' as const },
-        { name: 'Debt/Equity', value: 0.65, prev: 0.68, eq: 'Total Debt/Equity', description: 'Skuldsättningsgrad - förhållandet mellan skulder och eget kapital', category: 'standard' as const },
-        { name: 'Current Ratio', value: 1.8, prev: 1.7, eq: 'Current Assets/Liabilities', description: 'Likviditetsgrad - företagets förmåga att betala kortfristiga skulder', category: 'standard' as const },
-        { name: 'Beta', value: 1.15, prev: 1.12, eq: 'Market Beta', description: 'Beta-koefficient - mäter volatilitet relativt marknaden', category: 'rtf' as const },
-        { name: 'Volatility', value: 0.18, prev: 0.21, eq: 'Annualized Vol', description: 'Årlig volatilitet - mäter prissvängningarnas storlek över tid', category: 'rtf' as const },
-        { name: 'Sharpe', value: 1.35, prev: 1.28, eq: 'Risk-adj Return', description: 'Sharpe-kvot - riskjusterad avkastning per volatilitetsenhet', category: 'rtf' as const },
-        { name: 'VaR', value: -0.024, prev: -0.028, eq: 'Value at Risk', description: 'Value at Risk - uppskattad maximal förlust under normala marknadsförhållanden', category: 'rtf' as const }
+        // RTF (Relative Trend Forecast) - Inner orbit (blue theme)
+        { name: 'SMA 30 min', value: 0.12, prev: 0.08, eq: 'SMA_30_min', description: 'Simple Moving Average minimum värde över 30 dagar — mäter prisposition relativt kortsiktig botten', category: 'rtf' as const },
+        { name: 'SMA 30 avg', value: 0.05, prev: 0.03, eq: 'SMA_30_avg', description: 'Simple Moving Average genomsnitt över 30 dagar — mäter prisposition relativt kortsiktig trend', category: 'rtf' as const },
+        { name: 'SMA 100 min', value: 0.18, prev: 0.14, eq: 'SMA_100_min', description: 'Simple Moving Average minimum värde över 100 dagar — mäter prisposition relativt medellång botten', category: 'rtf' as const },
+        { name: 'SMA 100 avg', value: 0.08, prev: 0.06, eq: 'SMA_100_avg', description: 'Simple Moving Average genomsnitt över 100 dagar — mäter prisposition relativt medellång trend', category: 'rtf' as const },
+        { name: 'SMA 150 min', value: 0.22, prev: 0.19, eq: 'SMA_150_min', description: 'Simple Moving Average minimum värde över 150 dagar — mäter prisposition relativt långsiktig botten', category: 'rtf' as const },
+        { name: 'SMA 150 avg', value: 0.11, prev: 0.09, eq: 'SMA_150_avg', description: 'Simple Moving Average genomsnitt över 150 dagar — mäter prisposition relativt långsiktig trend', category: 'rtf' as const },
+        
+        // Momentum indicators - Middle orbit (green/purple/orange theme)
+        { name: 'MomEma 150,15', value: -0.31, prev: -0.25, eq: 'MomEma_150_15', description: 'EMA Momentum (150,15) — mäter förändringshastighet i 150-dagars EMA över 15 dagar', category: 'momentum' as const },
+        { name: 'MomEma 70,15', value: -0.18, prev: -0.22, eq: 'MomEma_70_15', description: 'EMA Momentum (70,15) — mäter förändringshastighet i 70-dagars EMA över 15 dagar', category: 'momentum' as const },
+        { name: 'MomEma 100,15', value: -0.24, prev: -0.19, eq: 'MomEma_100_15', description: 'EMA Momentum (100,15) — mäter förändringshastighet i 100-dagars EMA över 15 dagar', category: 'momentum' as const },
+        { name: 'MomTema 300,15', value: 0.12, prev: 0.14, eq: 'MomTema_300_15', description: 'TEMA Momentum (300,15) — mäter förändringshastighet i 300-dagars TEMA över 15 dagar', category: 'momentum' as const },
+        { name: 'RCTema 200', value: 0.18, prev: 0.22, eq: 'RCTema_200', description: 'Rate of Change TEMA (200) — mäter aktuellt pris relativt 200-dagars TEMA', category: 'momentum' as const },
+        { name: 'RCTema 100', value: 0.15, prev: 0.19, eq: 'RCTema_100', description: 'Rate of Change TEMA (100) — mäter aktuellt pris relativt 100-dagars TEMA', category: 'momentum' as const },
+        
+        // Standard indicators - Outer orbit (red/orange theme)
+        { name: 'LogReturn 30', value: 0.085, prev: 0.092, eq: 'LogReturn_30', description: 'Logaritmisk avkastning 30 dagar — mäter procentuell förändring över 30 dagar på logaritmisk skala', category: 'standard' as const }
       ]
     }
 
-    // Use simple fallback for now
+    // Extract actual values from CSV data if available
+    const latestData = csvData[csvData.length - 1] || {}
+    const previousData = csvData[csvData.length - 2] || {}
+    
     return [
-      { name: 'RSI', value: 65.2, prev: 62.1, eq: 'RSI(14)', description: 'Relative Strength Index - momentumindikator som mäter hastigheten och förändringen av prisrörelser', category: 'momentum' as const },
-      { name: 'MACD', value: 0.032, prev: 0.028, eq: 'MACD(12,26,9)', description: 'Moving Average Convergence Divergence - trend-följande momentumindikator', category: 'momentum' as const },
-      { name: 'EMA Ratio', value: 1.025, prev: 1.018, eq: 'EMA(20)/EMA(50)', description: 'Exponential Moving Average ratio - kortvariga till långvariga trendförhållande', category: 'momentum' as const },
-      { name: 'PE Ratio', value: 18.5, prev: 19.2, eq: 'Price/Earnings', description: 'Pris-till-vinst-förhållande - värderingsmått för aktier', category: 'standard' as const },
-      { name: 'PB Ratio', value: 2.1, prev: 2.3, eq: 'Price/Book', description: 'Pris-till-bokförda värde - värderingsindikator baserad på företagets nettotillgångar', category: 'standard' as const },
-      { name: 'ROE', value: 0.142, prev: 0.138, eq: 'Return on Equity', description: 'Avkastning på eget kapital - mäter företagets lönsamhet relativt aktieägarnas kapital', category: 'standard' as const },
-      { name: 'Debt/Equity', value: 0.65, prev: 0.68, eq: 'Total Debt/Equity', description: 'Skuldsättningsgrad - förhållandet mellan skulder och eget kapital', category: 'standard' as const },
-      { name: 'Current Ratio', value: 1.8, prev: 1.7, eq: 'Current Assets/Liabilities', description: 'Likviditetsgrad - företagets förmåga att betala kortfristiga skulder', category: 'standard' as const },
-      { name: 'Beta', value: 1.15, prev: 1.12, eq: 'Market Beta', description: 'Beta-koefficient - mäter volatilitet relativt marknaden', category: 'rtf' as const },
-      { name: 'Volatility', value: 0.18, prev: 0.21, eq: 'Annualized Vol', description: 'Årlig volatilitet - mäter prissvängningarnas storlek över tid', category: 'rtf' as const },
-      { name: 'Sharpe', value: 1.35, prev: 1.28, eq: 'Risk-adj Return', description: 'Sharpe-kvot - riskjusterad avkastning per volatilitetsenhet', category: 'rtf' as const },
-      { name: 'VaR', value: -0.024, prev: -0.028, eq: 'Value at Risk', description: 'Value at Risk - uppskattad maximal förlust under normala marknadsförhållanden', category: 'rtf' as const }
+      // RTF features - Blue theme, inner orbit
+      { 
+        name: 'SMA 30 min', 
+        value: latestData.SMA_30_min || 0.12, 
+        prev: previousData.SMA_30_min || 0.08, 
+        eq: 'SMA_30_min', 
+        description: 'Simple Moving Average minimum värde över 30 dagar — mäter prisposition relativt kortsiktig botten', 
+        category: 'rtf' as const 
+      },
+      { 
+        name: 'SMA 30 avg', 
+        value: latestData.SMA_30_avg || 0.05, 
+        prev: previousData.SMA_30_avg || 0.03, 
+        eq: 'SMA_30_avg', 
+        description: 'Simple Moving Average genomsnitt över 30 dagar — mäter prisposition relativt kortsiktig trend', 
+        category: 'rtf' as const 
+      },
+      { 
+        name: 'SMA 100 min', 
+        value: latestData.SMA_100_min || 0.18, 
+        prev: previousData.SMA_100_min || 0.14, 
+        eq: 'SMA_100_min', 
+        description: 'Simple Moving Average minimum värde över 100 dagar — mäter prisposition relativt medellång botten', 
+        category: 'rtf' as const 
+      },
+      { 
+        name: 'SMA 100 avg', 
+        value: latestData.SMA_100_avg || 0.08, 
+        prev: previousData.SMA_100_avg || 0.06, 
+        eq: 'SMA_100_avg', 
+        description: 'Simple Moving Average genomsnitt över 100 dagar — mäter prisposition relativt medellång trend', 
+        category: 'rtf' as const 
+      },
+      { 
+        name: 'SMA 150 min', 
+        value: latestData.SMA_150_min || 0.22, 
+        prev: previousData.SMA_150_min || 0.19, 
+        eq: 'SMA_150_min', 
+        description: 'Simple Moving Average minimum värde över 150 dagar — mäter prisposition relativt långsiktig botten', 
+        category: 'rtf' as const 
+      },
+      { 
+        name: 'SMA 150 avg', 
+        value: latestData.SMA_150_avg || 0.11, 
+        prev: previousData.SMA_150_avg || 0.09, 
+        eq: 'SMA_150_avg', 
+        description: 'Simple Moving Average genomsnitt över 150 dagar — mäter prisposition relativt långsiktig trend', 
+        category: 'rtf' as const 
+      },
+      
+      // Momentum features - Green/Purple/Orange theme, middle orbit
+      { 
+        name: 'MomEma 150,15', 
+        value: latestData.MomEma_150_15 || -0.31, 
+        prev: previousData.MomEma_150_15 || -0.25, 
+        eq: 'MomEma_150_15', 
+        description: 'EMA Momentum (150,15) — mäter förändringshastighet i 150-dagars EMA över 15 dagar', 
+        category: 'momentum' as const 
+      },
+      { 
+        name: 'MomEma 70,15', 
+        value: latestData.MomEma_70_15 || -0.18, 
+        prev: previousData.MomEma_70_15 || -0.22, 
+        eq: 'MomEma_70_15', 
+        description: 'EMA Momentum (70,15) — mäter förändringshastighet i 70-dagars EMA över 15 dagar', 
+        category: 'momentum' as const 
+      },
+      { 
+        name: 'MomEma 100,15', 
+        value: latestData.MomEma_100_15 || -0.24, 
+        prev: previousData.MomEma_100_15 || -0.19, 
+        eq: 'MomEma_100_15', 
+        description: 'EMA Momentum (100,15) — mäter förändringshastighet i 100-dagars EMA över 15 dagar', 
+        category: 'momentum' as const 
+      },
+      { 
+        name: 'MomTema 300,15', 
+        value: latestData.MomTema_300_15 || 0.12, 
+        prev: previousData.MomTema_300_15 || 0.14, 
+        eq: 'MomTema_300_15', 
+        description: 'TEMA Momentum (300,15) — mäter förändringshastighet i 300-dagars TEMA över 15 dagar', 
+        category: 'momentum' as const 
+      },
+      { 
+        name: 'RCTema 200', 
+        value: latestData.RCTema_200 || 0.18, 
+        prev: previousData.RCTema_200 || 0.22, 
+        eq: 'RCTema_200', 
+        description: 'Rate of Change TEMA (200) — mäter aktuellt pris relativt 200-dagars TEMA', 
+        category: 'momentum' as const 
+      },
+      { 
+        name: 'RCTema 100', 
+        value: latestData.RCTema_100 || 0.15, 
+        prev: previousData.RCTema_100 || 0.19, 
+        eq: 'RCTema_100', 
+        description: 'Rate of Change TEMA (100) — mäter aktuellt pris relativt 100-dagars TEMA', 
+        category: 'momentum' as const 
+      },
+      
+      // Standard indicators - Red/Orange theme, outer orbit
+      { 
+        name: 'LogReturn 30', 
+        value: latestData.LogReturn_30 || 0.085, 
+        prev: previousData.LogReturn_30 || 0.092, 
+        eq: 'LogReturn_30', 
+        description: 'Logaritmisk avkastning 30 dagar — mäter procentuell förändring över 30 dagar på logaritmisk skala', 
+        category: 'standard' as const 
+      }
     ]
   }, [csvData])
 
