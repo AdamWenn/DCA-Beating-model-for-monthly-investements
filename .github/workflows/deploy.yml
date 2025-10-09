@@ -1,6 +1,9 @@
 name: Deploy web_6 to GitHub Pages
 
 on:
+  schedule:
+    # Kör varje dag kl 01:09 UTC (02:09 svensk tid på vintern, 03:09 på sommaren)
+    - cron: '9 1 * * *'
   push:
     branches: [ main, master ]
   workflow_dispatch:
