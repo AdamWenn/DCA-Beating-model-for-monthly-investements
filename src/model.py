@@ -11,6 +11,7 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.pipeline import Pipeline
 from sklearn.dummy import DummyClassifier
 from imblearn.ensemble import BalancedBaggingClassifier
+from sklearn.ensemble import HistGradientBoostingClassifier
 
 class CustomThresholdBaggingClassifier(BalancedBaggingClassifier):
     """
@@ -92,6 +93,19 @@ def make_mlp_bagging(decision_threshold=0.5):
         n_jobs=1  # Use single job to avoid pickle issues with custom classes
     )
     return clf
+
+def make_hgb(random_state=42, learning_rate=0.05, max_iter=800, early_stopping=True):
+    """Factory for HistGradientBoostingClassifier used by safe step1.
+    Caller should pass sample_weight when fitting for class balance.
+    """
+    return HistGradientBoostingClassifier(
+        max_depth=None,
+        learning_rate=learning_rate,
+        max_iter=max_iter,
+        early_stopping=early_stopping,
+        validation_fraction=0.1,
+        random_state=random_state,
+    )
 
 def fit_predict(clf, X_train, y_train, X_test, debug=False):
     """
