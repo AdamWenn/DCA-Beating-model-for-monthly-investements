@@ -2,11 +2,16 @@
 echo Starting daily data update process...
 echo.
 
-echo Step 1: Running data fetch and prediction...
+echo Step 1: Running data fetch and prediction (SAFE)…
 cd /d "%~dp0"
-py src\API_Usage2_0\step1.py
+set STEP1_MODEL=hgb
+set STEP1_THRESH_POLICY=recall_at_prec
+set STEP1_TARGET_PRECISION=0.60
+rem Optional: uncomment to change lookback window for daily run
+rem set STEP1_YEARS_BACK=2
+py src\API_Usage2_0\step1_safe2.py
 if %errorlevel% neq 0 (
-    echo ERROR: step1.py failed
+    echo ERROR: step1_safe2.py failed
     pause
     exit /b 1
 )

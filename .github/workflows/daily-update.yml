@@ -60,12 +60,17 @@ jobs:
         echo "FRED_API_KEY=${FRED_API_KEY_SECRET}" >> $GITHUB_ENV
         echo "FRED_API_KEY secret detected and exported."
 
-    - name: Run step1 - Data fetch and prediction
+    - name: Run step1 (SAFE) - Data fetch and prediction
+      env:
+        STEP1_MODEL: hgb
+        STEP1_THRESH_POLICY: recall_at_prec
+        STEP1_TARGET_PRECISION: "0.60"
+        # STEP1_YEARS_BACK: "2"   # default lookback; adjust if needed
       run: |
-        # Set PYTHONPATH and run step1.py directly
+        # Set PYTHONPATH and run safe step1 directly
         export PYTHONPATH="${PYTHONPATH}:$(pwd)"
         cd src/API_Usage2_0
-        python step1.py
+        python step1_safe2.py
         
     - name: Run step2 - Backtest and analysis  
       run: |
